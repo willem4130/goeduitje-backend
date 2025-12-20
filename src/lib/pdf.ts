@@ -1,4 +1,5 @@
 import puppeteer from 'puppeteer'
+import chromium from '@sparticuz/chromium'
 
 interface WorkshopRequestData {
   id: number
@@ -24,10 +25,25 @@ export async function generateQuotePDF(
   requestData: WorkshopRequestData,
   emailContent: string
 ): Promise<Buffer> {
-  const browser = await puppeteer.launch({
-    headless: true,
-    args: ['--no-sandbox', '--disable-setuid-sandbox'],
-  })
+  // Detect if running in serverless environment (Vercel)
+  const isServerless = !!process.env.VERCEL || !!process.env.AWS_LAMBDA_FUNCTION_NAME
+
+  let browser
+
+  if (isServerless) {
+    // Use @sparticuz/chromium for serverless (Vercel/AWS Lambda)
+    browser = await puppeteer.launch({
+      args: chromium.args,
+      executablePath: await chromium.executablePath(),
+      headless: true,
+    })
+  } else {
+    // Use local Puppeteer for development
+    browser = await puppeteer.launch({
+      headless: true,
+      args: ['--no-sandbox', '--disable-setuid-sandbox'],
+    })
+  }
 
   try {
     const page = await browser.newPage()
