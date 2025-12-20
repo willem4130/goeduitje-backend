@@ -96,51 +96,23 @@ export async function PATCH(
 
         console.log('[STATUS WORKFLOW] Email generated successfully')
 
-        // 2. Generate PDF quote
-        console.log('[STATUS WORKFLOW] Generating PDF quote...')
-        const pdfBuffer = await generateQuotePDF(
-          {
-            id: requestId,
-            contactName: request_data.contactName,
-            email: request_data.email,
-            phone: request_data.phone,
-            organization: request_data.organization,
-            activityType: request_data.activityType,
-            preferredDate: request_data.preferredDate,
-            alternativeDate: request_data.alternativeDate,
-            participants: request_data.participants,
-            ageGroup: request_data.ageGroup,
-            location: request_data.location,
-            quotedPrice: request_data.quotedPrice,
-            locationFee: request_data.locationFee,
-            finalPrice: request_data.finalPrice,
-            priceIncludesVat: request_data.priceIncludesVat,
-            dietaryRestrictions: request_data.dietaryRestrictions,
-            specialRequirements: request_data.specialRequirements,
-          },
-          emailContent
-        )
+        // TODO: PDF generation temporarily disabled - see TODO.md
+        // 2. Generate PDF quote (SKIPPED - Blob storage not configured)
+        // console.log('[STATUS WORKFLOW] Generating PDF quote...')
+        // const pdfBuffer = await generateQuotePDF(...)
 
-        console.log('[STATUS WORKFLOW] PDF generated successfully')
+        // 3. Upload PDF to Vercel Blob (SKIPPED - Blob storage not configured)
+        // console.log('[STATUS WORKFLOW] Uploading PDF to Vercel Blob...')
+        // const blob = await put(...)
 
-        // 3. Upload PDF to Vercel Blob
-        console.log('[STATUS WORKFLOW] Uploading PDF to Vercel Blob...')
-        const filename = `quote-${requestId}-${Date.now()}.pdf`
-        const blob = await put(`quotes/${filename}`, pdfBuffer, {
-          access: 'public',
-          contentType: 'application/pdf',
-        })
-
-        console.log(`[STATUS WORKFLOW] PDF uploaded: ${blob.url}`)
-
-        // 4. Send email via Resend
+        // 4. Send email via Resend (WITHOUT PDF for now)
         console.log('[STATUS WORKFLOW] Sending quote email...')
         const emailResult = await sendQuoteEmail({
           to: request_data.email,
           subject: `Offerte Goeduitje - ${request_data.activityType}`,
           content: emailContent,
-          pdfAttachment: pdfBuffer,
-          pdfFilename: `Offerte-Goeduitje-${request_data.contactName.replace(/\s+/g, '-')}.pdf`,
+          // pdfAttachment: pdfBuffer, // Disabled - see TODO.md
+          // pdfFilename: `Offerte-Goeduitje-${request_data.contactName.replace(/\s+/g, '-')}.pdf`,
         })
 
         console.log(`[STATUS WORKFLOW] Email sent successfully (ID: ${emailResult.id})`)
@@ -150,7 +122,7 @@ export async function PATCH(
           .update(workshopRequests)
           .set({
             quoteEmailSentAt: new Date(),
-            quotePdfUrl: blob.url,
+            // quotePdfUrl: blob.url, // Disabled - see TODO.md
             aiGeneratedEmailContent: emailContent,
           })
           .where(eq(workshopRequests.id, requestId))
