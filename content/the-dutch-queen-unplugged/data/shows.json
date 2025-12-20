@@ -1,0 +1,115 @@
+{
+  "upcoming": [
+    {
+      "date": "Jan 28, 2026",
+      "time": "19:30",
+      "venue": "Maaspoort",
+      "city": "Venlo",
+      "status": "tickets",
+      "ticketUrl": "https://www.maaspoort.nl/programma/queen-unplugged-the-dutch-queen-unplugged/28-01-2026-20-15/"
+    },
+    {
+      "date": "Feb 1, 2026",
+      "time": "14:30",
+      "venue": "Cultuurkoepel Heiloo",
+      "city": "Heiloo",
+      "status": "tickets",
+      "ticketUrl": "https://www.cultuurkoepelheiloo.nl/posts/the-dutch-queen-unplugged"
+    },
+    {
+      "date": "Feb 27, 2026",
+      "time": "20:15",
+      "venue": "Theater De Purmaryn",
+      "city": "Purmerend",
+      "status": "tickets",
+      "ticketUrl": "https://depurmaryn.nl/agenda/seizoen-2025-2026/the-dutch-queen-unplugged/?eventId=1491249153-1727346643"
+    },
+    {
+      "date": "Mar 5, 2026",
+      "time": "20:00",
+      "venue": "Fulcotheater",
+      "city": "IJsselstein",
+      "status": "tickets",
+      "ticketUrl": "https://www.fulcotheater.nl/the-dutch-queen-unplugged/"
+    },
+    {
+      "date": "Mar 6, 2026",
+      "time": "19:30",
+      "venue": "EKP Gebouw (De Kring op locatie)",
+      "city": "Roosendaal",
+      "status": "tickets",
+      "ticketUrl": "https://www.dekringroosendaal.nl/agenda/3460/the-dutch-queen/unplugged"
+    },
+    {
+      "date": "Mar 20, 2026",
+      "time": "20:00",
+      "venue": "Schouwburg Odeon",
+      "city": "Zwolle",
+      "status": "tickets",
+      "ticketUrl": "https://www.zwolsetheaters.nl/programma/2025-2026/the-dutch-queen"
+    },
+    {
+      "date": "Mar 27, 2026",
+      "time": "20:00",
+      "venue": "Theater De Leest",
+      "city": "Waalwijk",
+      "status": "tickets",
+      "ticketUrl": "https://www.deleest.nl/programma/5554/unplugged/the-dutch-queen"
+    },
+    {
+      "date": "Apr 2, 2026",
+      "time": "20:15",
+      "venue": "Agora Theater",
+      "city": "Lelystad",
+      "status": "tickets",
+      "ticketUrl": "https://www.agora-lelystad.nl/agenda/1141/in-een-akoestische-formatie/the-dutch-queen-unplugged"
+    },
+    {
+      "date": "Apr 9, 2026",
+      "time": "20:15",
+      "venue": "Kattendans",
+      "city": "Bergeijk",
+      "status": "tickets",
+      "ticketUrl": "https://kattendans.nl/voorstelling/the-dutch-queen/"
+    },
+    {
+      "date": "Apr 10, 2026",
+      "time": "20:15",
+      "venue": "Munttheater",
+      "city": "Weert",
+      "status": "tickets",
+      "ticketUrl": "https://www.munttheater.nl/agenda/the-dutch-queen-unplugged"
+    },
+    {
+      "date": "Apr 17, 2026",
+      "time": "20:00",
+      "venue": "Schouwburg Cuijk",
+      "city": "Cuijk",
+      "status": "tickets",
+      "ticketUrl": "https://schouwburgcuijk.nl/agenda/384/unplugged/the-dutch-queen"
+    },
+    {
+      "date": "Apr 18, 2026",
+      "time": "20:15",
+      "venue": "Podium het Garnizoen",
+      "city": "Harderwijk",
+      "status": "tickets",
+      "ticketUrl": "https://podiumhetgarnizoen.nl/productie/the-dutch-queen/"
+    },
+    {
+      "date": "Apr 23, 2026",
+      "time": "20:15",
+      "venue": "AMARE Concertzaal",
+      "city": "Den Haag",
+      "status": "tickets",
+      "ticketUrl": "https://www.amare.nl/nl/agenda/3495/unplugged/the-dutch-queen"
+    }
+  ],
+  "past": [],
+  "settings": {
+    "showPastShows": true,
+    "maxUpcomingDisplay": 10,
+    "maxPastDisplay": 5,
+    "autoArchiveAfterDays": 7
+  }
+}

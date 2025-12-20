@@ -1,0 +1,55 @@
+{
+  "id": "the-dutch-queen",
+  "name": "The Dutch Queen",
+  "tagline": "We will ROCK you.",
+  "genre": "rock",
+  "established": "2024",
+  "theme": {
+    "primaryColor": "amber-900",
+    "secondaryColor": "teal-800",
+    "accentColor": "purple-600",
+    "animationIntensity": "full",
+    "particleEffects": true,
+    "glowEffects": true
+  },
+  "hero": {
+    "displayMode": "logo",
+    "logoFile": "hero-logo.png",
+    "logoAnimation": "fade-scale",
+    "textAnimation": "fade-up",
+    "overlayEnhancement": false,
+    "overlayStyle": "radial-dark",
+    "overlayIntensity": "medium",
+    "logoGlow": false,
+    "logoGlowColor": "auto",
+    "textGlow": false,
+    "textGlowColor": "auto",
+    "logoDropShadow": false,
+    "animationDuration": 1.2,
+    "animationDelay": 0.3,
+    "animationEasing": "easeOut",
+    "mobileScale": 0.7,
+    "tabletScale": 0.85
+  },
+  "seo": {
+    "metaTitle": "The Dutch Queen | Queen Tribute Band | Nederland",
+    "metaDescription": "The Dutch Queen brengt een eerbetoon aan Queen met zowel de grote hits als minder bekend materiaal. Vijf gepassioneerde muzikanten verenigd door hun liefde voor Queen.",
+    "keywords": [
+      "Queen tribute",
+      "tribute band",
+      "Queen coverband",
+      "The Dutch Queen",
+      "live muziek",
+      "rock band",
+      "Nederland",
+      "Bohemian Rhapsody",
+      "Freddie Mercury tribute"
+    ],
+    "ogImage": "/content/bands/the-dutch-queen/assets/logos/og-image.jpg"
+  },
+  "branding": {
+    "logoMain": "/content/bands/the-dutch-queen/assets/logos/main-logo.png",
+    "logoIcon": "/content/bands/the-dutch-queen/assets/logos/icon.png",
+    "favicon": "/content/bands/the-dutch-queen/assets/logos/favicon.ico"
+  }
+}
