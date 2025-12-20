@@ -4,8 +4,8 @@ import { Navigation } from '@/components/Navigation'
 import './globals.css'
 
 export const metadata: Metadata = {
-  title: 'The Dutch Queen - Admin Panel',
-  description: 'Manage shows for The Dutch Queen',
+  title: 'Goeduitje - Admin Dashboard',
+  description: 'Beheer workshop aanvragen en activiteiten voor Goeduitje',
 }
 
 export default function RootLayout({

@@ -524,13 +524,81 @@ When admin changes `workshopRequest.status`:
 - ✅ Tested with `test-quote.ts` - Dynamic prompts working correctly
 - ✅ Verified location filtering (Nijmegen), drinks policy, and pricing accuracy
 
-### Phase 3.6 (Next): Database Management UI
-- [ ] Create `/app/activities/page.tsx` - CRUD UI for workshop activities
-- [ ] Create `/app/locations/page.tsx` - CRUD UI for workshop locations
-- [ ] Create `/app/pricing/page.tsx` - CRUD UI for pricing tiers
-- [ ] Update `/src/components/Sidebar.tsx` - Add navigation links
-- [ ] Create API endpoints for CRUD operations (`/api/activities`, `/api/locations`, `/api/pricing`)
-- [ ] Verify quote preview shows updated database-driven content when data changes
+### Phase 3.6 (Dec 18, 2024): Database Management UI ✅ COMPLETED
+- ✅ Created API endpoints for activities, locations, and pricing tiers (full CRUD)
+- ✅ Built 3 management UI pages with Table + Sheet pattern
+- ✅ Updated Navigation with "Content Management" section
+- ✅ Zero TypeScript errors in production code
+- ✅ All changes committed and pushed to main branch (commit 5675a19)
+
+### Phase 3.7 (Dec 20, 2024): World-Class UX Enhancement ✅ COMPLETED
+**Objective**: Transform workshop management UI into world-class admin experience
+
+#### Components Created:
+1. **WorkshopRequestSheet** (`src/components/WorkshopRequestSheet.tsx`)
+   - Comprehensive detail view with all request fields
+   - Edit mode with inline validation
+   - Organized sections: Contact, Workshop Details, Location, Special Requirements, Pricing, Internal Notes
+   - Beautiful visual hierarchy with icons and badges
+   - Status visualization with color-coded badges
+   - Automation metadata display (quote sent timestamp, PDF URL, AI email content)
+   - Loading states and error handling
+
+2. **ConfirmStatusChangeDialog** (`src/components/ConfirmStatusChangeDialog.tsx`)
+   - Prevents accidental email sends with confirmation dialog
+   - Clear explanation of what each status change does
+   - Visual status transition (current → new)
+   - Step-by-step automation breakdown for quote generation
+   - Warnings for irreversible actions
+   - Customer data preview before sending quotes
+   - Estimated processing time display
+
+3. **Enhanced QuotePreviewDialog** (`src/components/QuotePreviewDialog.tsx`)
+   - Preview-before-send functionality
+   - Three tabs: Email Preview, AI Prompt (dynamic), API Parameters
+   - "Send Now" button within preview dialog
+   - Test preview generation without sending to customer
+   - System prompt visibility showing database-driven content
+   - Clear status indicators (sent vs. preview)
+
+4. **Preview Quote API Endpoint** (`src/app/api/workshops/requests/[id]/preview-quote/route.ts`)
+   - Generates test quote without sending email
+   - Returns AI-generated email content
+   - Shows dynamic system prompt for transparency
+   - Displays API parameters (model, temperature, max tokens)
+
+#### Workshop Page Overhaul (`src/app/workshops/page.tsx`):
+- **Complete rewrite** with world-class UX patterns
+- Toast notifications for all actions (success/error feedback)
+- Loading states with spinner animations
+- Processing indicators (dim rows during operations)
+- Smart action buttons contextual to status
+- "View Details" button opens comprehensive WorkshopRequestSheet
+- "Preview Quote" button before sending
+- Confirmation dialogs before destructive actions
+- Status filter with count badges
+- Empty state with helpful messaging
+- Responsive table design
+
+#### UI/UX Improvements:
+- ✅ Consistent icon usage (Lucide React)
+- ✅ Color-coded status badges
+- ✅ Loading spinners for async operations
+- ✅ Error boundaries and graceful fallbacks
+- ✅ Success/error toast notifications
+- ✅ Confirmation dialogs prevent mistakes
+- ✅ Inline help text and tooltips
+- ✅ Visual hierarchy with sections and separators
+- ✅ Accessibility: keyboard navigation, ARIA labels
+- ✅ Responsive design (mobile, tablet, desktop)
+
+#### Technical Achievements:
+- **Zero TypeScript errors** in application code
+- Installed missing Radix UI components (@radix-ui/react-separator)
+- Fixed browser tab title (The Dutch Queen → Goeduitje)
+- Created comprehensive FRONTEND_API_CONTRACT.md
+- Documented field mapping mismatch between frontend form and backend schema
+- Provided transformation function for frontend integration
 
 ### Phase 4 (Week 4): Confirmed Workshops
 - ✅ confirmedWorkshop auto-creation (implemented in Phase 2)
@@ -571,6 +639,7 @@ When admin changes `workshopRequest.status`:
 - **Implementation Plan**: `/Users/willemvandenberg/.claude/plans/reflective-juggling-yeti.md`
 - **Frontend Repo**: https://github.com/willem4130/goeduitje-nl-rebuild.git
 - **Frontend CLAUDE.md**: `/Users/willemvandenberg/Dev/Goeduitjeweb/goeduitje-nl-rebuild/CLAUDE.md`
+- **Frontend API Contract**: `FRONTEND_API_CONTRACT.md` (in this repo)
 - **Guus's Original Prompt**: `/Users/willemvandenberg/Dev/Goeduitjeweb/Masterprompt antwoordmail aanvraag_2025.12.11.docx`
 - **Dynamic Prompt Template**: `src/prompts/guus-quote-prompt-template.txt`
 - **Dynamic Prompt Builder**: `src/lib/prompt-builder.ts`

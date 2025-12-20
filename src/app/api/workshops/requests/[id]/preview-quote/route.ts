@@ -3,8 +3,7 @@ import { db } from '@/db'
 import { workshopRequests } from '@/db/schema'
 import { eq } from 'drizzle-orm'
 import { generateQuoteEmail } from '@/lib/ai'
-import fs from 'fs/promises'
-import path from 'path'
+import { buildSystemPrompt } from '@/lib/prompt-builder'
 
 type RouteParams = {
   params: Promise<{ id: string }>
@@ -53,9 +52,12 @@ export async function POST(
       accessibilityNeeds: requestData.accessibilityNeeds,
     })
 
-    // Load system prompt for display
-    const promptPath = path.join(process.cwd(), 'src', 'prompts', 'guus-quote-prompt.txt')
-    const systemPrompt = await fs.readFile(promptPath, 'utf-8')
+    // Build dynamic system prompt for display
+    const systemPrompt = await buildSystemPrompt({
+      activityType: requestData.activityType || '',
+      participants: requestData.participants || 0,
+      location: requestData.location,
+    })
 
     return NextResponse.json({
       email: emailContent,
@@ -63,6 +65,7 @@ export async function POST(
       apiModel: 'claude-3-haiku-20240307',
       temperature: 0.7,
       maxTokens: 2048,
+      previewNote: '⚠️ Dit is een preview - GEEN email is verstuurd naar de klant',
     })
   } catch (error) {
     console.error('Preview quote generation failed:', error)
