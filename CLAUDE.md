@@ -2,6 +2,10 @@
 
 **CRITICAL**: This is the backend CMS for Goeduitje workshop management. Completely separate from the frontend website.
 
+> 📖 **Quick Start**: For a condensed overview, see [`QUICK_START.md`](./QUICK_START.md)
+>
+> This document contains comprehensive project documentation including business flows, implementation phases, and detailed architecture.
+
 ## ⚠️ ABSOLUTE WARNINGS - READ FIRST
 
 ### Repository Separation Rules
