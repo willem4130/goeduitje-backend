@@ -1,5 +1,38 @@
 # TODO - Goeduitje Backend
 
+## 🚨 CRITICAL - Email Domain Verification (Blocking Email Sending)
+
+**Issue**: goeduitje.nl domain not verified in Resend
+**Status**: Blocked - Cannot send emails from guus@goeduitje.nl
+**Created**: Dec 20, 2024
+
+### Problem:
+- AI email generation works ✅
+- Email API call fails ❌ with: "The goeduitje.nl domain is not verified"
+- Resend requires domain ownership verification before sending
+
+### Solutions:
+**Option A - Verify Domain (RECOMMENDED):**
+1. Go to https://resend.com/domains
+2. Click "Add Domain"
+3. Enter: `goeduitje.nl`
+4. Add DNS records to domain registrar:
+   - TXT record for domain verification
+   - DKIM records for email authentication
+5. Wait for verification (usually 5-15 minutes)
+6. Test email sending
+
+**Option B - Use Test Email (Quick Fix):**
+- Temporarily change `from` address in `src/lib/email.ts:29`
+- Use: `onboarding@resend.dev` (Resend's test domain)
+- Only works for testing, not production
+
+### Current Status:
+- Automation flow: AI generation ✅ → Email sending ❌
+- Using placeholder from address: `guus@goeduitje.nl`
+
+---
+
 ## 🚨 CRITICAL - Blob Storage Setup (Not Working)
 
 **Issue**: Vercel Blob Storage not properly configured

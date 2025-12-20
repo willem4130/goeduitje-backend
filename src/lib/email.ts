@@ -26,7 +26,7 @@ export async function sendQuoteEmail({
     .join('')
 
   const emailPayload: any = {
-    from: 'Guus van den Elzen - Goeduitje <guus@goeduitje.nl>',
+    from: 'Goeduitje (Test) <onboarding@resend.dev>', // TODO: Change to guus@goeduitje.nl after domain verification
     to: [to],
     subject,
     html: '<!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"></head><body style="font-family: \'Segoe UI\', Tahoma, Geneva, Verdana, sans-serif; color: #333; line-height: 1.6; max-width: 600px; margin: 0 auto; padding: 20px;"><div style="text-align: center; margin-bottom: 30px; padding-bottom: 20px; border-bottom: 3px solid #d97706;"><h1 style="color: #d97706; font-size: 28px; margin: 0 0 10px 0;">Goeduitje</h1><p style="color: #666; font-size: 14px; margin: 0;">Kookworkshops & Stadsspellen</p></div><div style="margin: 20px 0;">' + htmlContent + '</div>' + (pdfAttachment ? '<div style="background: #f9fafb; padding: 15px; border-radius: 8px; border-left: 4px solid #d97706; margin: 30px 0;"><p style="margin: 0; color: #666;">📎 <strong>Bijlage:</strong> Gedetailleerde offerte in PDF-formaat</p></div>' : '') + '<div style="margin-top: 40px; padding-top: 20px; border-top: 2px solid #e5e7eb; text-align: center; font-size: 12px; color: #666;"><p style="margin: 5px 0;"><strong>Goeduitje</strong></p><p style="margin: 5px 0;">Guus van den Elzen</p><p style="margin: 5px 0;">Email: info@goeduitje.nl</p><p style="margin: 5px 0;">Website: <a href="https://www.goeduitje.nl" style="color: #d97706; text-decoration: none;">www.goeduitje.nl</a></p></div></body></html>',
