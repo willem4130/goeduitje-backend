@@ -1,0 +1,68 @@
+[dotenv@17.2.3] injecting env (20) from .env.local -- tip: 🔐 encrypt with Dotenvx: https://dotenvx.com
+✅ API keys loaded successfully
+
+🧪 Testing Quote Generation System
+
+Test Request: {
+  "id": 999,
+  "contactName": "Jan de Vries",
+  "email": "jan@example.nl",
+  "phone": "06-12345678",
+  "organization": "Bedrijf XYZ",
+  "activityType": "kookworkshop",
+  "preferredDate": "2025-02-15",
+  "participants": 12,
+  "location": "Nijmegen",
+  "hasOwnLocation": false,
+  "dietaryRestrictions": "Vegetarische opties graag",
+  "specialRequirements": "Kunnen we de workshop in de middag doen?",
+  "ageGroup": null,
+  "alternativeDate": null,
+  "accessibilityNeeds": null,
+  "quotedPrice": null,
+  "locationFee": null,
+  "finalPrice": null,
+  "priceIncludesVat": null
+}
+
+================================================================================
+
+📧 Step 1: Generating AI Email with Guus prompt...
+
+The model 'claude-3-opus-20240229' is deprecated and will reach end-of-life on January 5th, 2026
+Please migrate to a newer model. Visit https://docs.anthropic.com/en/docs/resources/model-deprecations for more information.
+
+❌ Error: NotFoundError: 404 {"type":"error","error":{"type":"not_found_error","message":"model: claude-3-opus-20240229"},"request_id":"req_011CWHqHxkabKEcuUgxCd9rK"}
+    at APIError.generate (/Users/willemvandenberg/Dev/Goeduitjeweb/goeduitje-backend/node_modules/@anthropic-ai/sdk/src/core/error.ts:75:14)
+    at Anthropic.makeStatusError (/Users/willemvandenberg/Dev/Goeduitjeweb/goeduitje-backend/node_modules/@anthropic-ai/sdk/src/client.ts:443:28)
+    at Anthropic.makeRequest (/Users/willemvandenberg/Dev/Goeduitjeweb/goeduitje-backend/node_modules/@anthropic-ai/sdk/src/client.ts:678:24)
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async generateQuoteEmail (/Users/willemvandenberg/Dev/Goeduitjeweb/goeduitje-backend/src/lib/ai.ts:36:19)
+    at async test (/Users/willemvandenberg/Dev/Goeduitjeweb/goeduitje-backend/test-quote.ts:46:19) {
+  status: 404,
+  headers: Headers {
+    date: 'Sat, 20 Dec 2025 11:08:04 GMT',
+    'content-type': 'application/json',
+    'transfer-encoding': 'chunked',
+    connection: 'keep-alive',
+    'x-should-retry': 'false',
+    'request-id': 'req_011CWHqHxkabKEcuUgxCd9rK',
+    'strict-transport-security': 'max-age=31536000; includeSubDomains; preload',
+    'anthropic-organization-id': '4cd18807-6d6d-415a-9126-a0effbe0e234',
+    server: 'cloudflare',
+    'x-envoy-upstream-service-time': '73',
+    'cf-cache-status': 'DYNAMIC',
+    'x-robots-tag': 'none',
+    'content-encoding': 'gzip',
+    'cf-ray': '9b0eadffffa696f4-AMS'
+  },
+  requestID: 'req_011CWHqHxkabKEcuUgxCd9rK',
+  error: {
+    type: 'error',
+    error: {
+      type: 'not_found_error',
+      message: 'model: claude-3-opus-20240229'
+    },
+    request_id: 'req_011CWHqHxkabKEcuUgxCd9rK'
+  }
+}

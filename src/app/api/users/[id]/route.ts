@@ -18,7 +18,6 @@ export async function GET(
       email: users.email,
       name: users.name,
       role: users.role,
-      bandAccess: users.bandAccess,
       lastLogin: users.lastLogin,
       createdAt: users.createdAt,
       updatedAt: users.updatedAt,
@@ -78,7 +77,6 @@ export async function PATCH(
       updateData.email = body.email
     }
     if (body.role) updateData.role = body.role
-    if (body.bandAccess !== undefined) updateData.bandAccess = body.bandAccess
     if (body.password) {
       updateData.passwordHash = await bcrypt.hash(body.password, 10)
     }
@@ -91,7 +89,6 @@ export async function PATCH(
         email: users.email,
         name: users.name,
         role: users.role,
-        bandAccess: users.bandAccess,
         lastLogin: users.lastLogin,
         createdAt: users.createdAt,
         updatedAt: users.updatedAt,

@@ -1,0 +1,112 @@
+[
+  {
+    "drinks_price_id": 1,
+    "location_id": 2,
+    "item_type": "beverage",
+    "item_name": "Coffee",
+    "price_excl_vat": null,
+    "price_incl_vat": 1.4,
+    "unit": "per_item",
+    "notes": null
+  },
+  {
+    "drinks_price_id": 2,
+    "location_id": 2,
+    "item_type": "beverage",
+    "item_name": "Tea",
+    "price_excl_vat": null,
+    "price_incl_vat": 1.1,
+    "unit": "per_item",
+    "notes": null
+  },
+  {
+    "drinks_price_id": 3,
+    "location_id": 2,
+    "item_type": "beverage",
+    "item_name": "Soft drinks",
+    "price_excl_vat": null,
+    "price_incl_vat": 2.6,
+    "unit": "per_item",
+    "notes": null
+  },
+  {
+    "drinks_price_id": 4,
+    "location_id": 2,
+    "item_type": "beverage",
+    "item_name": "Wine",
+    "price_excl_vat": null,
+    "price_incl_vat": 3,
+    "unit": "per_item",
+    "notes": null
+  },
+  {
+    "drinks_price_id": 5,
+    "location_id": 4,
+    "item_type": "package",
+    "item_name": "Drinks flat rate",
+    "price_excl_vat": 12.5,
+    "price_incl_vat": null,
+    "unit": "per_person",
+    "notes": "Initial flat rate"
+  },
+  {
+    "drinks_price_id": 6,
+    "location_id": 4,
+    "item_type": "beverage",
+    "item_name": "Additional consumption",
+    "price_excl_vat": 2,
+    "price_incl_vat": null,
+    "unit": "per_item",
+    "notes": "After flat rate"
+  },
+  {
+    "drinks_price_id": 7,
+    "location_id": 8,
+    "item_type": "beverage",
+    "item_name": "Coffee",
+    "price_excl_vat": null,
+    "price_incl_vat": 2,
+    "unit": "per_item",
+    "notes": null
+  },
+  {
+    "drinks_price_id": 8,
+    "location_id": 8,
+    "item_type": "beverage",
+    "item_name": "Soft drinks",
+    "price_excl_vat": null,
+    "price_incl_vat": 1.5,
+    "unit": "per_item",
+    "notes": null
+  },
+  {
+    "drinks_price_id": 9,
+    "location_id": 8,
+    "item_type": "beverage",
+    "item_name": "Beer",
+    "price_excl_vat": null,
+    "price_incl_vat": 1.5,
+    "unit": "per_item",
+    "notes": null
+  },
+  {
+    "drinks_price_id": 10,
+    "location_id": 8,
+    "item_type": "beverage",
+    "item_name": "Wine",
+    "price_excl_vat": null,
+    "price_incl_vat": 15,
+    "unit": "per_bottle",
+    "notes": null
+  },
+  {
+    "drinks_price_id": 11,
+    "location_id": 9,
+    "item_type": "beverage",
+    "item_name": "Soft drinks",
+    "price_excl_vat": null,
+    "price_incl_vat": 1.5,
+    "unit": "per_item",
+    "notes": null
+  }
+]

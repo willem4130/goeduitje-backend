@@ -1,0 +1,36 @@
+🧪 Testing Quote Generation System
+
+Test Request: {
+  "id": 999,
+  "contactName": "Jan de Vries",
+  "email": "jan@example.nl",
+  "phone": "06-12345678",
+  "organization": "Bedrijf XYZ",
+  "activityType": "kookworkshop",
+  "preferredDate": "2025-02-15",
+  "participants": 12,
+  "location": "Nijmegen",
+  "hasOwnLocation": false,
+  "dietaryRestrictions": "Vegetarische opties graag",
+  "specialRequirements": "Kunnen we de workshop in de middag doen?",
+  "ageGroup": null,
+  "alternativeDate": null,
+  "accessibilityNeeds": null,
+  "quotedPrice": null,
+  "locationFee": null,
+  "finalPrice": null,
+  "priceIncludesVat": null
+}
+
+================================================================================
+
+📧 Step 1: Generating AI Email with Guus prompt...
+
+
+❌ Error: Error: Could not resolve authentication method. Expected either apiKey or authToken to be set. Or for one of the "X-Api-Key" or "Authorization" headers to be explicitly omitted
+    at Anthropic.validateHeaders (/Users/willemvandenberg/Dev/Goeduitjeweb/goeduitje-backend/node_modules/@anthropic-ai/sdk/src/client.ts:386:11)
+    at Anthropic.buildHeaders (/Users/willemvandenberg/Dev/Goeduitjeweb/goeduitje-backend/node_modules/@anthropic-ai/sdk/src/client.ts:905:10)
+    at async Anthropic.buildRequest (/Users/willemvandenberg/Dev/Goeduitjeweb/goeduitje-backend/node_modules/@anthropic-ai/sdk/src/client.ts:853:24)
+    at async Anthropic.makeRequest (/Users/willemvandenberg/Dev/Goeduitjeweb/goeduitje-backend/node_modules/@anthropic-ai/sdk/src/client.ts:549:35)
+    at async generateQuoteEmail (/Users/willemvandenberg/Dev/Goeduitjeweb/goeduitje-backend/src/lib/ai.ts:36:19)
+    at async test (/Users/willemvandenberg/Dev/Goeduitjeweb/goeduitje-backend/test-quote.ts:36:19)

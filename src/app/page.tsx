@@ -20,35 +20,31 @@ import {
 
 type DashboardStats = {
   stats: {
-    upcomingShows: number
-    activeCampaigns: number
-    scheduledPosts: number
+    pendingRequests: number
+    quotesSent: number
+    confirmedWorkshops: number
     mediaItems: number
   }
-  recentShows: Array<{
+  recentRequests: Array<{
     id: number
-    bandId: string
-    title: string
-    date: string
-    time: string
-    venueName: string
-    venueCity: string
+    contactName: string | null
+    email: string | null
+    organization: string | null
+    activityType: string | null
+    preferredDate: string | null
+    status: string
+    createdAt: string
   }>
-  campaignsByStatus: Record<string, number>
+  requestsByStatus: Record<string, number>
 }
 
 export default function Dashboard() {
   const [stats, setStats] = useState<DashboardStats | null>(null)
   const [loading, setLoading] = useState(true)
-  const [bandFilter, setBandFilter] = useState<'all' | 'full-band' | 'unplugged'>('all')
 
-  const fetchStats = (bandId: string) => {
+  const fetchStats = () => {
     setLoading(true)
-    const url = bandId === 'all'
-      ? '/api/dashboard/stats'
-      : `/api/dashboard/stats?bandId=${bandId}`
-
-    fetch(url)
+    fetch('/api/dashboard/stats')
       .then(res => res.json())
       .then(data => {
         setStats(data)
@@ -61,8 +57,8 @@ export default function Dashboard() {
   }
 
   useEffect(() => {
-    fetchStats(bandFilter)
-  }, [bandFilter])
+    fetchStats()
+  }, [])
 
   const formatDutchDate = (isoDate: string) => {
     const [year, month, day] = isoDate.split('-')
@@ -83,33 +79,17 @@ export default function Dashboard() {
         <div>
           <h1 className="text-4xl font-bold">Dashboard</h1>
           <p className="text-muted-foreground mt-1">
-            Welcome to The Dutch Queen Admin
+            Goeduitje Workshop Management
           </p>
         </div>
-        <Tabs value={bandFilter} onValueChange={(value) => setBandFilter(value as typeof bandFilter)} className="w-full sm:w-auto">
-          <TabsList className="grid w-full sm:w-[400px] grid-cols-3">
-            <TabsTrigger value="all" className="flex items-center gap-2">
-              <Music className="h-4 w-4" />
-              All Bands
-            </TabsTrigger>
-            <TabsTrigger value="full-band" className="flex items-center gap-2">
-              <Guitar className="h-4 w-4" />
-              Full Band
-            </TabsTrigger>
-            <TabsTrigger value="unplugged" className="flex items-center gap-2">
-              <Guitar className="h-4 w-4" />
-              Unplugged
-            </TabsTrigger>
-          </TabsList>
-        </Tabs>
       </div>
 
       {/* Quick Actions */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-        <Link href="/shows/new" className="block">
+        <Link href="/workshops" className="block">
           <Button className="w-full h-20 text-lg" size="lg">
             <Plus className="mr-2 h-5 w-5" />
-            New Show
+            View Requests
           </Button>
         </Link>
         <Link href="/media" className="block">
@@ -120,33 +100,33 @@ export default function Dashboard() {
         </Link>
         <Button className="w-full h-20 text-lg" variant="outline" size="lg" disabled>
           <Target className="mr-2 h-5 w-5" />
-          New Campaign
+          Confirmed Workshops
         </Button>
         <Button className="w-full h-20 text-lg" variant="outline" size="lg" disabled>
           <MessageSquare className="mr-2 h-5 w-5" />
-          Schedule Post
+          Feedback
         </Button>
       </div>
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
         <StatsCard
-          title="Upcoming Shows"
-          value={stats?.stats.upcomingShows || 0}
+          title="Pending Requests"
+          value={stats?.stats.pendingRequests || 0}
           icon={Calendar}
-          description="Scheduled performances"
+          description="Awaiting response"
         />
         <StatsCard
-          title="Active Campaigns"
-          value={stats?.stats.activeCampaigns || 0}
+          title="Quotes Sent"
+          value={stats?.stats.quotesSent || 0}
           icon={Target}
-          description="Leads & bookings"
+          description="Awaiting confirmation"
         />
         <StatsCard
-          title="Scheduled Posts"
-          value={stats?.stats.scheduledPosts || 0}
+          title="Confirmed Workshops"
+          value={stats?.stats.confirmedWorkshops || 0}
           icon={MessageSquare}
-          description="Social media queue"
+          description="Booked events"
         />
         <StatsCard
           title="Media Items"
@@ -157,29 +137,29 @@ export default function Dashboard() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Recent Shows Widget */}
+        {/* Recent Requests Widget */}
         <Card className="p-6">
           <div className="flex justify-between items-center mb-4">
-            <h2 className="text-xl font-semibold">Upcoming Shows</h2>
-            <Link href="/shows">
+            <h2 className="text-xl font-semibold">Recent Workshop Requests</h2>
+            <Link href="/workshops">
               <Button variant="outline" size="sm">View All</Button>
             </Link>
           </div>
-          {stats?.recentShows && stats.recentShows.length > 0 ? (
+          {stats?.recentRequests && stats.recentRequests.length > 0 ? (
             <div className="space-y-3">
-              {stats.recentShows.map((show) => (
+              {stats.recentRequests.map((request) => (
                 <div
-                  key={show.id}
+                  key={request.id}
                   className="flex items-center justify-between p-3 rounded-lg border"
                 >
                   <div className="flex-1">
-                    <p className="font-medium">{show.venueName}</p>
+                    <p className="font-medium">{request.contactName || 'Unknown'}</p>
                     <p className="text-sm text-muted-foreground">
-                      {show.venueCity} • {formatDutchDate(show.date)} {show.time}
+                      {request.organization || request.email || 'No organization'} • {request.activityType || 'Not specified'}
                     </p>
                   </div>
-                  <Badge variant={show.bandId === 'full-band' ? 'default' : 'secondary'}>
-                    {show.bandId === 'full-band' ? 'Full Band' : 'Unplugged'}
+                  <Badge variant={request.status === 'bevestigde opdracht' ? 'default' : 'secondary'}>
+                    {request.status}
                   </Badge>
                 </div>
               ))}
@@ -187,23 +167,21 @@ export default function Dashboard() {
           ) : (
             <div className="text-center py-8">
               <Calendar className="w-12 h-12 text-muted-foreground mx-auto mb-2" />
-              <p className="text-muted-foreground">No upcoming shows</p>
-              <Link href="/shows/new">
-                <Button variant="link" className="mt-2">Add your first show</Button>
-              </Link>
+              <p className="text-muted-foreground">No workshop requests yet</p>
+              <p className="text-sm text-muted-foreground mt-2">Requests will appear here when submitted via the frontend</p>
             </div>
           )}
         </Card>
 
-        {/* Campaigns Pipeline Widget */}
+        {/* Request Status Pipeline Widget */}
         <Card className="p-6">
           <div className="flex justify-between items-center mb-4">
-            <h2 className="text-xl font-semibold">Sales Pipeline</h2>
+            <h2 className="text-xl font-semibold">Request Pipeline</h2>
             <Button variant="outline" size="sm">View All</Button>
           </div>
-          {stats?.campaignsByStatus && Object.keys(stats.campaignsByStatus).length > 0 ? (
+          {stats?.requestsByStatus && Object.keys(stats.requestsByStatus).length > 0 ? (
             <div className="space-y-3">
-              {Object.entries(stats.campaignsByStatus).map(([status, count]) => (
+              {Object.entries(stats.requestsByStatus).map(([status, count]) => (
                 <div
                   key={status}
                   className="flex items-center justify-between p-3 rounded-lg border"
@@ -211,7 +189,7 @@ export default function Dashboard() {
                   <div className="flex items-center gap-3">
                     <div className="w-2 h-2 rounded-full bg-primary" />
                     <span className="font-medium capitalize">
-                      {status.replace('-', ' ')}
+                      {status}
                     </span>
                   </div>
                   <Badge variant="outline">{count}</Badge>
@@ -221,8 +199,8 @@ export default function Dashboard() {
           ) : (
             <div className="text-center py-8">
               <Target className="w-12 h-12 text-muted-foreground mx-auto mb-2" />
-              <p className="text-muted-foreground">No active campaigns</p>
-              <Button variant="link" className="mt-2">Start your first campaign</Button>
+              <p className="text-muted-foreground">No requests yet</p>
+              <p className="text-sm text-muted-foreground mt-2">Request statuses will appear here</p>
             </div>
           )}
         </Card>

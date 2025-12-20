@@ -1,0 +1,29 @@
+[
+  {
+    "activity_id": 1,
+    "activity_name": "Kookworkshop 2 hoofdgerechten",
+    "base_price": 525,
+    "category": "cooking_workshop",
+    "description": "Kookworkshop met 2 hoofdgerechten",
+    "min_participants": 1,
+    "max_participants": 18
+  },
+  {
+    "activity_id": 2,
+    "activity_name": "Kookworkshop 1 hoofdgerecht",
+    "base_price": 475,
+    "category": "cooking_workshop",
+    "description": "Kookworkshop met 1 hoofdgerecht",
+    "min_participants": 1,
+    "max_participants": 18
+  },
+  {
+    "activity_id": 3,
+    "activity_name": "Stadspel",
+    "base_price": 350,
+    "category": "city_game",
+    "description": "Interactief stadsspel",
+    "min_participants": 1,
+    "max_participants": 20
+  }
+]

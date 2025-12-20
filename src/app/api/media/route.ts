@@ -7,8 +7,7 @@ import { desc, eq, and, like, or } from 'drizzle-orm'
 export async function GET(request: NextRequest) {
   try {
     const searchParams = request.nextUrl.searchParams
-    const bandId = searchParams.get('bandId')
-    const type = searchParams.get('type')
+    const workshopId = searchParams.get('workshopId')
     const category = searchParams.get('category')
     const search = searchParams.get('search')
 
@@ -17,23 +16,19 @@ export async function GET(request: NextRequest) {
     // Build where conditions
     const conditions = []
 
-    if (bandId) {
-      conditions.push(eq(mediaGallery.bandId, bandId))
-    }
-
-    if (type) {
-      conditions.push(eq(mediaGallery.type, type))
+    if (workshopId) {
+      conditions.push(eq(mediaGallery.workshopId, parseInt(workshopId)))
     }
 
     if (category) {
-      conditions.push(eq(mediaGallery.category, category))
+      conditions.push(eq(mediaGallery.category, category as any))
     }
 
-    if (search) {
+    if (search && mediaGallery.caption && mediaGallery.altText) {
       conditions.push(
         or(
-          like(mediaGallery.title, `%${search}%`),
-          like(mediaGallery.description, `%${search}%`)
+          like(mediaGallery.caption, `%${search}%`),
+          like(mediaGallery.altText, `%${search}%`)
         )
       )
     }
@@ -42,7 +37,7 @@ export async function GET(request: NextRequest) {
       query = query.where(and(...conditions)) as any
     }
 
-    const items = await query.orderBy(mediaGallery.displayOrder, desc(mediaGallery.createdAt))
+    const items = await query.orderBy(desc(mediaGallery.displayOrder), desc(mediaGallery.createdAt))
 
     return NextResponse.json(items)
   } catch (error) {
@@ -60,18 +55,19 @@ export async function POST(request: NextRequest) {
     const body = await request.json()
 
     const newMedia: NewMedia = {
-      bandId: body.bandId,
-      title: body.title || null,
-      description: body.description || null,
-      url: body.url,
-      thumbnailUrl: body.thumbnailUrl || null,
-      type: body.type,
-      category: body.category || null,
-      tags: body.tags || null,
+      workshopId: body.workshopId || null,
+      blobUrl: body.blobUrl,
+      fileName: body.fileName,
+      mimeType: body.mimeType,
       fileSize: body.fileSize || null,
-      mimeType: body.mimeType || null,
       width: body.width || null,
       height: body.height || null,
+      caption: body.caption || null,
+      altText: body.altText || null,
+      category: body.category || 'workshop',
+      tags: body.tags || null,
+      isPublic: body.isPublic || false,
+      showOnWebsite: body.showOnWebsite || false,
       uploadedBy: body.uploadedBy || null,
     }
 

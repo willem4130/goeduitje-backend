@@ -88,8 +88,7 @@ export const confirmedWorkshops = pgTable('confirmed_workshops', {
   workshopNotes: text('workshop_notes'), // How it went, highlights, issues
   customerSatisfaction: integer('customer_satisfaction'), // 1-5 rating (quick admin rating)
 
-  // References
-  customerFeedbackId: integer('customer_feedback_id').references(() => feedback.id),
+  // References (removed customerFeedbackId to avoid circular reference)
 
   // Financial
   paymentStatus: text('payment_status', {
@@ -194,6 +193,84 @@ export const mediaGallery = pgTable('media_gallery', {
 })
 
 // ============================================================
+// ACTIVITIES TABLE (Workshop/Activity Types)
+// Replaces hardcoded activity types in AI prompt
+// ============================================================
+export const activities = pgTable('activities', {
+  id: serial('id').primaryKey(),
+  activityName: text('activity_name').notNull(),
+  basePrice: decimal('base_price', { precision: 10, scale: 2 }).notNull(),
+  category: text('category').notNull(), // 'cooking_workshop', 'city_game', etc
+  description: text('description'),
+  minParticipants: integer('min_participants').default(1),
+  maxParticipants: integer('max_participants'),
+  isActive: boolean('is_active').default(true),
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+  updatedAt: timestamp('updated_at').notNull().defaultNow(),
+})
+
+// ============================================================
+// PRICING TIERS TABLE
+// Tiered pricing based on participant count
+// ============================================================
+export const pricingTiers = pgTable('pricing_tiers', {
+  id: serial('id').primaryKey(),
+  activityId: integer('activity_id').references(() => activities.id).notNull(),
+  minParticipants: integer('min_participants').notNull(),
+  maxParticipants: integer('max_participants'),
+  pricePerPerson: decimal('price_per_person', { precision: 10, scale: 2 }),
+  totalPrice: decimal('total_price', { precision: 10, scale: 2 }),
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+  updatedAt: timestamp('updated_at').notNull().defaultNow(),
+})
+
+// ============================================================
+// LOCATIONS TABLE
+// Available workshop locations
+// ============================================================
+export const locations = pgTable('locations', {
+  id: serial('id').primaryKey(),
+  locationName: text('location_name').notNull(),
+  city: text('city').notNull(),
+  minCapacity: integer('min_capacity'),
+  maxCapacity: integer('max_capacity'),
+  basePriceExclVat: decimal('base_price_excl_vat', { precision: 10, scale: 2 }).notNull(),
+  basePriceInclVat: decimal('base_price_incl_vat', { precision: 10, scale: 2 }).notNull(),
+  vatStatus: text('vat_status', {
+    enum: ['regular', 'exempt']
+  }).default('regular'),
+  drinksPolicy: text('drinks_policy', {
+    enum: ['flexible', 'via_location', 'mandatory_via_location']
+  }).notNull(),
+  goeduitjeDrinksAvailable: boolean('goeduitje_drinks_available').default(false),
+  address: text('address'),
+  contactPerson: text('contact_person'),
+  contactPhone: text('contact_phone'),
+  contactEmail: text('contact_email'),
+  notes: text('notes'),
+  isActive: boolean('is_active').default(true),
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+  updatedAt: timestamp('updated_at').notNull().defaultNow(),
+})
+
+// ============================================================
+// DRINKS PRICING TABLE
+// Location-specific drink prices
+// ============================================================
+export const drinksPricing = pgTable('drinks_pricing', {
+  id: serial('id').primaryKey(),
+  locationId: integer('location_id').references(() => locations.id).notNull(),
+  itemType: text('item_type').notNull(), // 'beverage', 'package', etc
+  itemName: text('item_name').notNull(),
+  priceExclVat: decimal('price_excl_vat', { precision: 10, scale: 2 }),
+  priceInclVat: decimal('price_incl_vat', { precision: 10, scale: 2 }),
+  unit: text('unit').default('per_item'), // 'per_item', 'per_person', etc
+  notes: text('notes'),
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+  updatedAt: timestamp('updated_at').notNull().defaultNow(),
+})
+
+// ============================================================
 // USERS TABLE (Admin Authentication)
 // ============================================================
 export const users = pgTable('users', {
@@ -223,6 +300,18 @@ export type NewFeedback = typeof feedback.$inferInsert
 
 export type Media = typeof mediaGallery.$inferSelect
 export type NewMedia = typeof mediaGallery.$inferInsert
+
+export type Activity = typeof activities.$inferSelect
+export type NewActivity = typeof activities.$inferInsert
+
+export type PricingTier = typeof pricingTiers.$inferSelect
+export type NewPricingTier = typeof pricingTiers.$inferInsert
+
+export type Location = typeof locations.$inferSelect
+export type NewLocation = typeof locations.$inferInsert
+
+export type DrinksPricing = typeof drinksPricing.$inferSelect
+export type NewDrinksPricing = typeof drinksPricing.$inferInsert
 
 export type User = typeof users.$inferSelect
 export type NewUser = typeof users.$inferInsert

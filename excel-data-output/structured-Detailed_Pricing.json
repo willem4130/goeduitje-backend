@@ -1,0 +1,387 @@
+[
+  {
+    "pricing_id": 1,
+    "activity_id": 1,
+    "group_size": "1",
+    "price_per_person": 525,
+    "total_price": 525
+  },
+  {
+    "pricing_id": 2,
+    "activity_id": 1,
+    "group_size": "2",
+    "price_per_person": 262.5,
+    "total_price": 525
+  },
+  {
+    "pricing_id": 3,
+    "activity_id": 1,
+    "group_size": "3",
+    "price_per_person": 175,
+    "total_price": 525
+  },
+  {
+    "pricing_id": 4,
+    "activity_id": 1,
+    "group_size": "4",
+    "price_per_person": 131.25,
+    "total_price": 525
+  },
+  {
+    "pricing_id": 5,
+    "activity_id": 1,
+    "group_size": "5",
+    "price_per_person": 105,
+    "total_price": 525
+  },
+  {
+    "pricing_id": 6,
+    "activity_id": 1,
+    "group_size": "6",
+    "price_per_person": 87.5,
+    "total_price": 525
+  },
+  {
+    "pricing_id": 7,
+    "activity_id": 1,
+    "group_size": "7",
+    "price_per_person": 75,
+    "total_price": 525
+  },
+  {
+    "pricing_id": 8,
+    "activity_id": 1,
+    "group_size": "8",
+    "price_per_person": 70,
+    "total_price": 560
+  },
+  {
+    "pricing_id": 9,
+    "activity_id": 1,
+    "group_size": "9",
+    "price_per_person": 70,
+    "total_price": 630
+  },
+  {
+    "pricing_id": 10,
+    "activity_id": 1,
+    "group_size": "10",
+    "price_per_person": 70,
+    "total_price": 700
+  },
+  {
+    "pricing_id": 11,
+    "activity_id": 1,
+    "group_size": "11",
+    "price_per_person": 60,
+    "total_price": 660
+  },
+  {
+    "pricing_id": 12,
+    "activity_id": 1,
+    "group_size": "12",
+    "price_per_person": 60,
+    "total_price": 720
+  },
+  {
+    "pricing_id": 13,
+    "activity_id": 1,
+    "group_size": "13",
+    "price_per_person": 60,
+    "total_price": 780
+  },
+  {
+    "pricing_id": 14,
+    "activity_id": 1,
+    "group_size": "14",
+    "price_per_person": 60,
+    "total_price": 840
+  },
+  {
+    "pricing_id": 15,
+    "activity_id": 1,
+    "group_size": "15",
+    "price_per_person": 60,
+    "total_price": 900
+  },
+  {
+    "pricing_id": 16,
+    "activity_id": 1,
+    "group_size": "16",
+    "price_per_person": 55,
+    "total_price": 880
+  },
+  {
+    "pricing_id": 17,
+    "activity_id": 1,
+    "group_size": "17",
+    "price_per_person": 55,
+    "total_price": 935
+  },
+  {
+    "pricing_id": 18,
+    "activity_id": 2,
+    "group_size": "1",
+    "price_per_person": 475,
+    "total_price": 475
+  },
+  {
+    "pricing_id": 19,
+    "activity_id": 2,
+    "group_size": "2",
+    "price_per_person": 237.5,
+    "total_price": 475
+  },
+  {
+    "pricing_id": 20,
+    "activity_id": 2,
+    "group_size": "3",
+    "price_per_person": 158.33,
+    "total_price": 475
+  },
+  {
+    "pricing_id": 21,
+    "activity_id": 2,
+    "group_size": "4",
+    "price_per_person": 118.75,
+    "total_price": 475
+  },
+  {
+    "pricing_id": 22,
+    "activity_id": 2,
+    "group_size": "5",
+    "price_per_person": 95,
+    "total_price": 475
+  },
+  {
+    "pricing_id": 23,
+    "activity_id": 2,
+    "group_size": "6",
+    "price_per_person": 79.17,
+    "total_price": 475
+  },
+  {
+    "pricing_id": 24,
+    "activity_id": 2,
+    "group_size": "7",
+    "price_per_person": 67.86,
+    "total_price": 475
+  },
+  {
+    "pricing_id": 25,
+    "activity_id": 2,
+    "group_size": "8",
+    "price_per_person": 65,
+    "total_price": 520
+  },
+  {
+    "pricing_id": 26,
+    "activity_id": 2,
+    "group_size": "9",
+    "price_per_person": 65,
+    "total_price": 585
+  },
+  {
+    "pricing_id": 27,
+    "activity_id": 2,
+    "group_size": "10",
+    "price_per_person": 65,
+    "total_price": 650
+  },
+  {
+    "pricing_id": 28,
+    "activity_id": 2,
+    "group_size": "11",
+    "price_per_person": 60,
+    "total_price": 660
+  },
+  {
+    "pricing_id": 29,
+    "activity_id": 2,
+    "group_size": "12",
+    "price_per_person": 60,
+    "total_price": 720
+  },
+  {
+    "pricing_id": 30,
+    "activity_id": 2,
+    "group_size": "13",
+    "price_per_person": 60,
+    "total_price": 780
+  },
+  {
+    "pricing_id": 31,
+    "activity_id": 2,
+    "group_size": "14",
+    "price_per_person": 60,
+    "total_price": 840
+  },
+  {
+    "pricing_id": 32,
+    "activity_id": 2,
+    "group_size": "15",
+    "price_per_person": 60,
+    "total_price": 900
+  },
+  {
+    "pricing_id": 33,
+    "activity_id": 2,
+    "group_size": "16",
+    "price_per_person": 55,
+    "total_price": 880
+  },
+  {
+    "pricing_id": 34,
+    "activity_id": 2,
+    "group_size": "17",
+    "price_per_person": 55,
+    "total_price": 935
+  },
+  {
+    "pricing_id": 35,
+    "activity_id": 3,
+    "group_size": "1",
+    "price_per_person": 350,
+    "total_price": 350
+  },
+  {
+    "pricing_id": 36,
+    "activity_id": 3,
+    "group_size": "2",
+    "price_per_person": 175,
+    "total_price": 350
+  },
+  {
+    "pricing_id": 37,
+    "activity_id": 3,
+    "group_size": "3",
+    "price_per_person": 116.67,
+    "total_price": 350
+  },
+  {
+    "pricing_id": 38,
+    "activity_id": 3,
+    "group_size": "4",
+    "price_per_person": 87.5,
+    "total_price": 350
+  },
+  {
+    "pricing_id": 39,
+    "activity_id": 3,
+    "group_size": "5",
+    "price_per_person": 70,
+    "total_price": 350
+  },
+  {
+    "pricing_id": 40,
+    "activity_id": 3,
+    "group_size": "6",
+    "price_per_person": 58.33,
+    "total_price": 350
+  },
+  {
+    "pricing_id": 41,
+    "activity_id": 3,
+    "group_size": "7",
+    "price_per_person": 50,
+    "total_price": 350
+  },
+  {
+    "pricing_id": 42,
+    "activity_id": 3,
+    "group_size": "8",
+    "price_per_person": 43.75,
+    "total_price": 350
+  },
+  {
+    "pricing_id": 43,
+    "activity_id": 3,
+    "group_size": "9",
+    "price_per_person": 38.89,
+    "total_price": 350
+  },
+  {
+    "pricing_id": 44,
+    "activity_id": 3,
+    "group_size": "10",
+    "price_per_person": 35,
+    "total_price": 350
+  },
+  {
+    "pricing_id": 45,
+    "activity_id": 3,
+    "group_size": "11",
+    "price_per_person": 35,
+    "total_price": 385
+  },
+  {
+    "pricing_id": 46,
+    "activity_id": 3,
+    "group_size": "12",
+    "price_per_person": 35,
+    "total_price": 420
+  },
+  {
+    "pricing_id": 47,
+    "activity_id": 3,
+    "group_size": "13",
+    "price_per_person": 35,
+    "total_price": 455
+  },
+  {
+    "pricing_id": 48,
+    "activity_id": 3,
+    "group_size": "14",
+    "price_per_person": 35,
+    "total_price": 490
+  },
+  {
+    "pricing_id": 49,
+    "activity_id": 3,
+    "group_size": "15",
+    "price_per_person": 35,
+    "total_price": 525
+  },
+  {
+    "pricing_id": 50,
+    "activity_id": 3,
+    "group_size": "16",
+    "price_per_person": 35,
+    "total_price": 560
+  },
+  {
+    "pricing_id": 51,
+    "activity_id": 3,
+    "group_size": "17",
+    "price_per_person": 35,
+    "total_price": 595
+  },
+  {
+    "pricing_id": 52,
+    "activity_id": 3,
+    "group_size": "18",
+    "price_per_person": 35,
+    "total_price": 630
+  },
+  {
+    "pricing_id": 53,
+    "activity_id": 3,
+    "group_size": "19",
+    "price_per_person": 35,
+    "total_price": 665
+  },
+  {
+    "pricing_id": 54,
+    "activity_id": 3,
+    "group_size": "20",
+    "price_per_person": 35,
+    "total_price": 700
+  },
+  {
+    "pricing_id": 55,
+    "activity_id": 3,
+    "group_size": ">20",
+    "price_per_person": 27.5,
+    "total_price": null
+  }
+]

@@ -1,0 +1,17 @@
+[
+  {
+    "category_code": "cooking_workshop",
+    "category_name": "Kookworkshop",
+    "category_description": "Interactieve kookworkshop waarbij deelnemers samen koken"
+  },
+  {
+    "category_code": "city_game",
+    "category_name": "Stadspel",
+    "category_description": "Interactief spel door de stad met opdrachten en uitdagingen"
+  },
+  {
+    "category_code": "teambuilding",
+    "category_name": "Teambuilding",
+    "category_description": "Teambuilding activiteiten gericht op samenwerking"
+  }
+]

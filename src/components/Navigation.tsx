@@ -6,53 +6,92 @@ import { cn } from '@/lib/utils'
 import {
   LayoutDashboard,
   Calendar,
-  Target,
+  ClipboardCheck,
   MessageSquare,
   Image as ImageIcon,
-  MapPin,
+  FileText,
   Settings,
   LogOut,
+  Database,
+  MapPin,
+  DollarSign,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 
-const navItems = [
+const navSections = [
   {
-    title: 'Dashboard',
-    href: '/',
-    icon: LayoutDashboard,
+    title: 'Overview',
+    items: [
+      {
+        title: 'Dashboard',
+        href: '/',
+        icon: LayoutDashboard,
+      },
+    ],
   },
   {
-    title: 'Shows',
-    href: '/shows',
-    icon: Calendar,
+    title: 'Workshops',
+    items: [
+      {
+        title: 'Workshop Requests',
+        href: '/workshops',
+        icon: Calendar,
+      },
+      {
+        title: 'Confirmed Workshops',
+        href: '/workshops/confirmed',
+        icon: ClipboardCheck,
+        badge: 'Soon',
+      },
+      {
+        title: 'Feedback',
+        href: '/feedback',
+        icon: MessageSquare,
+        badge: 'Soon',
+      },
+      {
+        title: 'Media Gallery',
+        href: '/media',
+        icon: ImageIcon,
+      },
+    ],
   },
   {
-    title: 'Media Gallery',
-    href: '/media',
-    icon: ImageIcon,
-  },
-  {
-    title: 'Campaigns',
-    href: '/campaigns',
-    icon: Target,
-    badge: 'Soon',
-  },
-  {
-    title: 'Social Posts',
-    href: '/social',
-    icon: MessageSquare,
-    badge: 'Soon',
-  },
-  {
-    title: 'Venues',
-    href: '/venues',
-    icon: MapPin,
+    title: 'Content Management',
+    items: [
+      {
+        title: 'Workshop Activities',
+        href: '/activities',
+        icon: Database,
+      },
+      {
+        title: 'Locations & Pricing',
+        href: '/locations',
+        icon: MapPin,
+      },
+      {
+        title: 'Pricing Tiers',
+        href: '/pricing',
+        icon: DollarSign,
+      },
+    ],
   },
   {
     title: 'Settings',
-    href: '/settings',
-    icon: Settings,
-    badge: 'Soon',
+    items: [
+      {
+        title: 'Quote Templates',
+        href: '/templates',
+        icon: FileText,
+        badge: 'Soon',
+      },
+      {
+        title: 'Settings',
+        href: '/settings',
+        icon: Settings,
+        badge: 'Soon',
+      },
+    ],
   },
 ]
 
@@ -62,38 +101,47 @@ export function Navigation() {
   return (
     <div className="flex h-full w-64 flex-col border-r bg-muted/10">
       <div className="p-6">
-        <h2 className="text-2xl font-bold">The Dutch Queen</h2>
-        <p className="text-sm text-muted-foreground">Admin Dashboard</p>
+        <h2 className="text-2xl font-bold">Goeduitje</h2>
+        <p className="text-sm text-muted-foreground">Workshop Management</p>
       </div>
 
-      <nav className="flex-1 space-y-1 px-3">
-        {navItems.map((item) => {
-          const Icon = item.icon
-          const isActive = pathname === item.href ||
-                          (item.href !== '/' && pathname.startsWith(item.href))
+      <nav className="flex-1 space-y-4 px-3 overflow-y-auto">
+        {navSections.map((section) => (
+          <div key={section.title}>
+            <h3 className="px-3 mb-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+              {section.title}
+            </h3>
+            <div className="space-y-1">
+              {section.items.map((item) => {
+                const Icon = item.icon
+                const isActive = pathname === item.href ||
+                                (item.href !== '/' && pathname.startsWith(item.href))
 
-          return (
-            <Link
-              key={item.href}
-              href={item.href}
-              className={cn(
-                'flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors',
-                isActive
-                  ? 'bg-primary text-primary-foreground'
-                  : 'hover:bg-muted',
-                item.badge && 'opacity-50 pointer-events-none'
-              )}
-            >
-              <Icon className="h-5 w-5" />
-              {item.title}
-              {item.badge && (
-                <span className="ml-auto text-xs bg-muted-foreground/20 px-2 py-0.5 rounded">
-                  {item.badge}
-                </span>
-              )}
-            </Link>
-          )
-        })}
+                return (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    className={cn(
+                      'flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors',
+                      isActive
+                        ? 'bg-primary text-primary-foreground'
+                        : 'hover:bg-muted',
+                      item.badge && 'opacity-50 pointer-events-none'
+                    )}
+                  >
+                    <Icon className="h-5 w-5" />
+                    {item.title}
+                    {item.badge && (
+                      <span className="ml-auto text-xs bg-muted-foreground/20 px-2 py-0.5 rounded">
+                        {item.badge}
+                      </span>
+                    )}
+                  </Link>
+                )
+              })}
+            </div>
+          </div>
+        ))}
       </nav>
 
       <div className="p-3 border-t">

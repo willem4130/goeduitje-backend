@@ -15,7 +15,6 @@ export async function GET(request: NextRequest) {
       email: users.email,
       name: users.name,
       role: users.role,
-      bandAccess: users.bandAccess,
       lastLogin: users.lastLogin,
       createdAt: users.createdAt,
       updatedAt: users.updatedAt,
@@ -73,7 +72,6 @@ export async function POST(request: NextRequest) {
       name: body.name,
       passwordHash,
       role: body.role || 'admin',
-      bandAccess: body.bandAccess || null,
     }
 
     const [user] = await db.insert(users).values(newUser).returning({
@@ -81,7 +79,6 @@ export async function POST(request: NextRequest) {
       email: users.email,
       name: users.name,
       role: users.role,
-      bandAccess: users.bandAccess,
       createdAt: users.createdAt,
       updatedAt: users.updatedAt,
     })

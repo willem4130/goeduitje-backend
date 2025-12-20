@@ -1,0 +1,14 @@
+[
+  {
+    "policy_code": "flexible",
+    "policy_description": "Drinks can be self-provided OR provided by Goeduitje (supermarket prices +50%)"
+  },
+  {
+    "policy_code": "via_location",
+    "policy_description": "Drinks must be ordered through the location"
+  },
+  {
+    "policy_code": "mandatory_via_location",
+    "policy_description": "Drinks must be ordered through the location (no other option)"
+  }
+]

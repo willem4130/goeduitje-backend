@@ -70,9 +70,11 @@ Admin platform for managing Goeduitje workshop requests, quote generation, execu
 
 ## Database Schema
 
-### 4 Core Tables
+### 8 Core Tables
 
-#### 1. workshopRequests
+#### Core Business Tables
+
+##### 1. workshopRequests
 Primary table for incoming workshop inquiries.
 
 ```typescript
@@ -116,7 +118,7 @@ Primary table for incoming workshop inquiries.
 - `offerte gemaakt` → **TRIGGERS**: AI email generation + PDF quote
 - `bevestigde opdracht` → **TRIGGERS**: Auto-create confirmedWorkshop record
 
-#### 2. confirmedWorkshops
+##### 2. confirmedWorkshops
 Tracks execution of booked workshops.
 
 ```typescript
@@ -147,7 +149,7 @@ Tracks execution of booked workshops.
 }
 ```
 
-#### 3. feedback
+##### 3. feedback
 Post-workshop customer reviews.
 
 ```typescript
@@ -175,7 +177,7 @@ Post-workshop customer reviews.
 }
 ```
 
-#### 4. mediaGallery
+##### 4. mediaGallery
 Workshop photos for customer galleries.
 
 ```typescript
@@ -200,22 +202,132 @@ Workshop photos for customer galleries.
 }
 ```
 
+#### Database-Driven Content Tables
+
+##### 5. activities
+Workshop activity types with descriptions.
+
+```typescript
+{
+  id: serial,
+  category: text,               // 'kookworkshop', 'stadsspel', 'pubquiz'
+  activityName: text,           // Display name
+  description: text,            // Full description for AI prompt
+  isActive: boolean,            // Whether activity is currently offered
+  createdAt: timestamp,
+  updatedAt: timestamp
+}
+```
+
+##### 6. pricingTiers
+Tiered pricing by participant count per activity.
+
+```typescript
+{
+  id: serial,
+  activityId: integer,          // FK to activities
+  minParticipants: integer,     // Tier starts at this count
+  maxParticipants: integer,     // Tier ends at this count (null = open-ended)
+  pricePerPerson: decimal,      // Price per person (if applicable)
+  totalPrice: decimal,          // Total price (if flat rate)
+  notes: text,                  // Internal notes
+  isActive: boolean,
+  createdAt: timestamp,
+  updatedAt: timestamp
+}
+```
+
+**Logic**: `findApplicableTier()` matches participant count to appropriate tier. For example:
+- 8-14 personen → €50/person
+- 15-24 personen → €45/person
+- 25+ personen → €40/person
+
+##### 7. locations
+Available workshop locations with capacity and pricing.
+
+```typescript
+{
+  id: serial,
+  locationName: text,           // "Grand Café Central"
+  city: text,                   // "Utrecht"
+  address: text,
+  maxCapacity: integer,         // Maximum participants
+  basePriceExclVat: decimal,    // Location rental price
+  basePriceInclVat: decimal,
+  drinksPolicy: enum,           // 'flexible', 'via_location', 'mandatory_via_location', 'self_provided'
+  goeduitjeDrinksAvailable: boolean,  // Can Goeduitje provide drinks
+  notes: text,                  // Internal notes
+  isActive: boolean,
+  createdAt: timestamp,
+  updatedAt: timestamp
+}
+```
+
+##### 8. drinksPricing
+Drink prices per location (for locations with 'via_location' policy).
+
+```typescript
+{
+  id: serial,
+  locationId: integer,          // FK to locations
+  itemName: text,               // "Biertje", "Fris", "Koffie/thee"
+  priceExclVat: decimal,
+  priceInclVat: decimal,
+  unit: text,                   // "per stuk", "onbeperkt"
+  isActive: boolean,
+  createdAt: timestamp,
+  updatedAt: timestamp
+}
+```
+
 ## AI Email Generation
 
-### Guus's System Prompt
+### Database-Driven Dynamic Prompts
+
+**Architecture**:
+- Base template: `src/prompts/guus-quote-prompt-template.txt` (structure and tone)
+- Dynamic builder: `src/lib/prompt-builder.ts` (queries database and injects data)
+- AI generation: `src/lib/ai.ts` (calls Anthropic API with dynamic prompt)
+
+**Flow**:
+1. Admin changes status to `'offerte gemaakt'`
+2. System calls `buildSystemPrompt({ activityType, participants, location })`
+3. Queries database tables: `activities`, `pricingTiers`, `locations`, `drinksPricing`
+4. Builds dynamic sections:
+   - Activity description from `activities` table
+   - Pricing tiers from `pricingTiers` (matched to participant count)
+   - Location options from `locations` (filtered by city if provided)
+   - Drinks pricing from `drinksPricing` (if applicable)
+5. Combines base template with dynamic data
+6. Sends to Claude API for email generation
+
+**Key Functions** (`src/lib/prompt-builder.ts`):
+- `buildSystemPrompt()` - Main entry point, orchestrates all queries
+- `getActivityInfo()` - Queries `activities` table by category
+- `getPricingInfo()` - Queries `pricingTiers`, finds applicable tier
+- `getLocationInfo()` - Queries `locations` + `drinksPricing`, filters by city
+- `findApplicableTier()` - Matches participant count to pricing tier
+- `buildActivitySection()` - Formats activity description for prompt
+- `buildPricingSection()` - Formats pricing tiers for prompt
+- `buildLocationsSection()` - Formats locations with drinks policy for prompt
+
+**Database as Source of Truth**: Admins manage pricing, locations, and activity descriptions via backend UI. Changes immediately reflected in AI-generated quotes. No code changes required to update pricing or add new locations.
+
+### Original Guus's System Prompt
 Location: `/Users/willemvandenberg/Dev/Goeduitjeweb/Masterprompt antwoordmail aanvraag_2025.12.11.docx`
+Note: Original prompt extracted to `src/prompts/guus-quote-prompt-template.txt` with hardcoded data removed
 
 **Trigger**: When `workshopRequest.status` changes to `'offerte gemaakt'`
 
 **Process**:
 1. Extract request details from database
-2. Load Guus's system prompt from .docx
-3. Call Anthropic API with prompt + request data
+2. Build dynamic system prompt via `buildSystemPrompt()` (queries activities, pricing, locations)
+3. Call Anthropic API with dynamic prompt + request data
 4. Generate personalized quote email
 5. Generate PDF quote using Puppeteer
 6. Upload PDF to Vercel Blob
 7. Send email via Resend with PDF attachment
-8. Update request: `quoteEmailSentAt`, `quotePdfUrl`
+8. Update request: `quoteEmailSentAt`, `quotePdfUrl`, `aiGeneratedEmailContent`
 
 ### Email Content (AI-Generated)
 - Personalized greeting
@@ -372,29 +484,59 @@ When admin changes `workshopRequest.status`:
 
 ## Implementation Phases
 
-### Phase 1 (Week 1): Foundation
-- ✅ Setup backend repo
+### Phase 1 (Week 1): Foundation ✅ COMPLETED
+- ✅ Setup backend repo (GitHub: goeduitje-backend)
 - ✅ Create CLAUDE.md
-- [ ] Extract Guus's system prompt
-- [ ] Create Drizzle schema (4 tables)
-- [ ] Setup environment variables
-- [ ] Create /commit command
+- ✅ Create Drizzle schema (5 tables: workshopRequests, confirmedWorkshops, feedback, mediaGallery, users)
+- ✅ Setup environment variables (.env.local)
+- ✅ Push schema to Neon database
+- ✅ Setup Vercel project + Blob storage
+- ✅ Fixed dashboard stats API (removed band-specific code)
+- ✅ Updated navigation sidebar
+- ✅ Dev server running on port 3003
 
-### Phase 2 (Week 2): Core Backend
-- [ ] workshopRequest CRUD endpoints
-- [ ] Status workflow state machine
-- [ ] Database migrations
+### Phase 2 (Week 2): Core Backend ✅ COMPLETED
+- ✅ workshopRequest CRUD endpoints (GET all, POST, GET by ID, PATCH, DELETE)
+- ✅ Status workflow state machine with automation triggers
+- ✅ Workshop requests page UI (/workshops)
+- ✅ Status filter functionality
+- ✅ Removed all band-specific API files (shows, bands)
+- ✅ Fixed TypeScript errors (0 errors)
+- ✅ Tested CRUD flow (create, read, update status, auto-create confirmedWorkshop)
 
-### Phase 3 (Week 3): Email & PDF
-- [ ] AI email generation (Anthropic)
-- [ ] Puppeteer PDF quotes
-- [ ] Resend integration
-- [ ] Automated quote delivery
+### Phase 3 (Week 3): Email & PDF ✅ COMPLETED
+- ✅ AI email generation (Anthropic) - `/src/lib/ai.ts`
+- ✅ Puppeteer PDF quotes - `/src/lib/pdf.ts`
+- ✅ Resend integration - `/src/lib/email.ts`
+- ✅ Automated quote delivery - Wired into status endpoint
+- ✅ Guus's email prompt extracted from .docx - `/src/prompts/guus-quote-prompt-template.txt`
+- ✅ Quote automation triggers on status → 'offerte gemaakt'
+- ✅ Generates AI email, PDF quote, uploads to Vercel Blob, sends via Resend
+- ✅ Updates database with `quoteEmailSentAt`, `quotePdfUrl`, `aiGeneratedEmailContent`
+
+### Phase 3.5 (Dec 20, 2024): Database-Driven Prompts ✅ COMPLETED
+- ✅ Created 4 new database tables (`activities`, `pricingTiers`, `locations`, `drinksPricing`)
+- ✅ Imported data from Excel files (3 activities, 12 pricing tiers, 11 locations, 11 drinks records)
+- ✅ Built dynamic prompt system (`src/lib/prompt-builder.ts`)
+- ✅ Created base template without hardcoded data (`src/prompts/guus-quote-prompt-template.txt`)
+- ✅ **Integration complete**: Updated `src/lib/ai.ts:22-27` to use `buildSystemPrompt()`
+- ✅ Fixed TypeScript errors in `prompt-builder.ts` (Drizzle ORM query chaining, type inference)
+- ✅ Tested with `test-quote.ts` - Dynamic prompts working correctly
+- ✅ Verified location filtering (Nijmegen), drinks policy, and pricing accuracy
+
+### Phase 3.6 (Next): Database Management UI
+- [ ] Create `/app/activities/page.tsx` - CRUD UI for workshop activities
+- [ ] Create `/app/locations/page.tsx` - CRUD UI for workshop locations
+- [ ] Create `/app/pricing/page.tsx` - CRUD UI for pricing tiers
+- [ ] Update `/src/components/Sidebar.tsx` - Add navigation links
+- [ ] Create API endpoints for CRUD operations (`/api/activities`, `/api/locations`, `/api/pricing`)
+- [ ] Verify quote preview shows updated database-driven content when data changes
 
 ### Phase 4 (Week 4): Confirmed Workshops
-- [ ] confirmedWorkshop auto-creation
+- ✅ confirmedWorkshop auto-creation (implemented in Phase 2)
 - [ ] Execution tracking UI
 - [ ] Workshop calendar view
+- [ ] Confirmed workshops list page
 
 ### Phase 5 (Week 5): Media & Feedback
 - [ ] Vercel Blob media uploads
@@ -414,12 +556,24 @@ When admin changes `workshopRequest.status`:
 - [ ] Performance optimization
 - [ ] Production deployment
 
+## Data Import Sources
+
+**Excel Files** (used for one-time initial import ONLY):
+- `/Users/willemvandenberg/Dev/Goeduitjeweb/Databases backend/Real databases locations and prices/251220_Databases_backend_Structured.xlsx`
+  - Imported to: `activities` and `pricingTiers` tables
+- `/Users/willemvandenberg/Dev/Goeduitjeweb/Databases backend/Real databases locations and prices/Locatieprijzen_Database.xlsx`
+  - Imported to: `locations` and `drinksPricing` tables
+
+**IMPORTANT**: Excel files are reference only. Database is now the source of truth. All future updates should be made via backend UI, NOT by re-importing Excel files.
+
 ## Related Documentation
 
 - **Implementation Plan**: `/Users/willemvandenberg/.claude/plans/reflective-juggling-yeti.md`
 - **Frontend Repo**: https://github.com/willem4130/goeduitje-nl-rebuild.git
 - **Frontend CLAUDE.md**: `/Users/willemvandenberg/Dev/Goeduitjeweb/goeduitje-nl-rebuild/CLAUDE.md`
-- **Guus's Prompt**: `/Users/willemvandenberg/Dev/Goeduitjeweb/Masterprompt antwoordmail aanvraag_2025.12.11.docx`
+- **Guus's Original Prompt**: `/Users/willemvandenberg/Dev/Goeduitjeweb/Masterprompt antwoordmail aanvraag_2025.12.11.docx`
+- **Dynamic Prompt Template**: `src/prompts/guus-quote-prompt-template.txt`
+- **Dynamic Prompt Builder**: `src/lib/prompt-builder.ts`
 
 ## OTAP Pipeline (To Be Configured)
 
