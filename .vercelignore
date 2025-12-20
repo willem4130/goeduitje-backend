@@ -1,0 +1,12 @@
+# Development utility scripts
+read-excel-data.ts
+excel-data-output/
+
+# Test files
+*.test.ts
+*.test.tsx
+__tests__/
+
+# Documentation
+TEST_RESULTS.md
+QUICK_START.md
