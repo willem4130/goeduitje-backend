@@ -22,6 +22,7 @@ import {
   ChefHat,
   FileEdit,
   Star,
+  BarChart3,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { LucideIcon } from 'lucide-react'
@@ -97,6 +98,11 @@ const navSections: NavSection[] = [
   {
     title: 'Website Content',
     items: [
+      {
+        title: 'KPI Cijfers',
+        href: '/content/kpi',
+        icon: BarChart3,
+      },
       {
         title: 'Google Reviews',
         href: '/google-reviews',
