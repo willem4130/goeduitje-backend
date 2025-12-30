@@ -1,39 +1,111 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Switch } from '@/components/ui/switch'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Separator } from '@/components/ui/separator'
-import { Mail, Brain, Database, Bell, Shield, Info } from 'lucide-react'
+import { Mail, Brain, Database, Bell, Shield, Loader2, Save } from 'lucide-react'
 import { toast } from 'sonner'
 
-export default function SettingsPage() {
-  const [emailSettings, setEmailSettings] = useState({
+type Settings = {
+  email: {
+    fromName: string
+    fromEmail: string
+    replyTo: string
+    ccAdmin: boolean
+    adminEmail: string
+  }
+  ai: {
+    enabled: boolean
+    model: string
+    autoSendQuotes: boolean
+  }
+  notifications: {
+    newRequestEmail: boolean
+    statusChangeEmail: boolean
+    dailyDigest: boolean
+  }
+}
+
+const DEFAULT_SETTINGS: Settings = {
+  email: {
     fromName: 'Guus van den Elzen',
     fromEmail: 'guus@goeduitje.nl',
     replyTo: 'guus@goeduitje.nl',
     ccAdmin: true,
     adminEmail: 'info@goeduitje.nl'
-  })
-
-  const [aiSettings, setAiSettings] = useState({
+  },
+  ai: {
     enabled: true,
     model: 'claude-3-sonnet',
     autoSendQuotes: false
-  })
-
-  const [notificationSettings, setNotificationSettings] = useState({
+  },
+  notifications: {
     newRequestEmail: true,
     statusChangeEmail: false,
     dailyDigest: false
-  })
+  }
+}
 
-  const handleSave = () => {
-    // In a full implementation, this would save to database
-    toast.success('Settings saved (demo only - not persisted)')
+export default function SettingsPage() {
+  const [loading, setLoading] = useState(true)
+  const [saving, setSaving] = useState(false)
+  const [emailSettings, setEmailSettings] = useState(DEFAULT_SETTINGS.email)
+  const [aiSettings, setAiSettings] = useState(DEFAULT_SETTINGS.ai)
+  const [notificationSettings, setNotificationSettings] = useState(DEFAULT_SETTINGS.notifications)
+
+  useEffect(() => {
+    fetchSettings()
+  }, [])
+
+  const fetchSettings = async () => {
+    try {
+      const res = await fetch('/api/settings')
+      const data = await res.json()
+      if (data.settings) {
+        setEmailSettings(data.settings.email)
+        setAiSettings(data.settings.ai)
+        setNotificationSettings(data.settings.notifications)
+      }
+    } catch {
+      toast.error('Failed to load settings')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleSave = async () => {
+    setSaving(true)
+    try {
+      const res = await fetch('/api/settings', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          settings: {
+            email: emailSettings,
+            ai: aiSettings,
+            notifications: notificationSettings
+          }
+        })
+      })
+      if (!res.ok) throw new Error('Failed')
+      toast.success('Settings saved successfully')
+    } catch {
+      toast.error('Failed to save settings')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <Loader2 className="h-8 w-8 animate-spin" />
+      </div>
+    )
   }
 
   return (
@@ -41,14 +113,6 @@ export default function SettingsPage() {
       <div className="mb-6">
         <h1 className="text-3xl font-bold">Settings</h1>
         <p className="text-muted-foreground">Configure system settings and preferences</p>
-      </div>
-
-      <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 mb-6 flex items-start gap-3">
-        <Info className="h-5 w-5 text-amber-600 flex-shrink-0 mt-0.5" />
-        <div className="text-sm text-amber-800">
-          <p className="font-medium">Demo Mode</p>
-          <p className="mt-1">Settings are not persisted in this demo. In production, these would be stored in the database.</p>
-        </div>
       </div>
 
       <div className="space-y-6">
@@ -202,7 +266,10 @@ export default function SettingsPage() {
         </Card>
 
         <div className="flex justify-end">
-          <Button onClick={handleSave}>Save Settings</Button>
+          <Button onClick={handleSave} disabled={saving}>
+            {saving ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Save className="h-4 w-4 mr-2" />}
+            Save Settings
+          </Button>
         </div>
       </div>
     </div>

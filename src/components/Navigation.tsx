@@ -21,6 +21,7 @@ import {
   Quote,
   ChefHat,
   FileEdit,
+  Star,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { LucideIcon } from 'lucide-react'
@@ -96,6 +97,11 @@ const navSections: NavSection[] = [
   {
     title: 'Website Content',
     items: [
+      {
+        title: 'Google Reviews',
+        href: '/google-reviews',
+        icon: Star,
+      },
       {
         title: 'FAQ',
         href: '/content/faq',
