@@ -23,8 +23,21 @@ import {
   FileEdit,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { LucideIcon } from 'lucide-react'
 
-const navSections = [
+type NavItem = {
+  title: string
+  href: string
+  icon: LucideIcon
+  badge?: string
+}
+
+type NavSection = {
+  title: string
+  items: NavItem[]
+}
+
+const navSections: NavSection[] = [
   {
     title: 'Overview',
     items: [
@@ -47,13 +60,11 @@ const navSections = [
         title: 'Confirmed Workshops',
         href: '/workshops/confirmed',
         icon: ClipboardCheck,
-        badge: 'Soon',
       },
       {
         title: 'Feedback',
         href: '/feedback',
         icon: MessageSquare,
-        badge: 'Soon',
       },
       {
         title: 'Media Gallery',
@@ -119,13 +130,11 @@ const navSections = [
         title: 'Quote Templates',
         href: '/templates',
         icon: FileText,
-        badge: 'Soon',
       },
       {
         title: 'Settings',
         href: '/settings',
         icon: Settings,
-        badge: 'Soon',
       },
     ],
   },
