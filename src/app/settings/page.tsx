@@ -7,7 +7,7 @@ import { Label } from '@/components/ui/label'
 import { Switch } from '@/components/ui/switch'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Separator } from '@/components/ui/separator'
-import { Mail, Brain, Database, Bell, Shield, Loader2, Save } from 'lucide-react'
+import { Mail, Brain, Database, Bell, Shield, Loader2, Save, BarChart3 } from 'lucide-react'
 import { toast } from 'sonner'
 
 type Settings = {
@@ -30,6 +30,11 @@ type Settings = {
   }
 }
 
+type SiteStats = {
+  companiesCount: string
+  activitiesCount: string
+}
+
 const DEFAULT_SETTINGS: Settings = {
   email: {
     fromName: 'Guus van den Elzen',
@@ -50,15 +55,22 @@ const DEFAULT_SETTINGS: Settings = {
   }
 }
 
+const DEFAULT_SITE_STATS: SiteStats = {
+  companiesCount: '80+',
+  activitiesCount: '200+'
+}
+
 export default function SettingsPage() {
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [emailSettings, setEmailSettings] = useState(DEFAULT_SETTINGS.email)
   const [aiSettings, setAiSettings] = useState(DEFAULT_SETTINGS.ai)
   const [notificationSettings, setNotificationSettings] = useState(DEFAULT_SETTINGS.notifications)
+  const [siteStats, setSiteStats] = useState<SiteStats>(DEFAULT_SITE_STATS)
 
   useEffect(() => {
     fetchSettings()
+    fetchSiteStats()
   }, [])
 
   const fetchSettings = async () => {
@@ -77,10 +89,23 @@ export default function SettingsPage() {
     }
   }
 
+  const fetchSiteStats = async () => {
+    try {
+      const res = await fetch('/api/site-stats')
+      const data = await res.json()
+      if (data.stats) {
+        setSiteStats(data.stats)
+      }
+    } catch {
+      // Site stats not configured yet, use defaults
+    }
+  }
+
   const handleSave = async () => {
     setSaving(true)
     try {
-      const res = await fetch('/api/settings', {
+      // Save settings
+      const settingsRes = await fetch('/api/settings', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -91,7 +116,16 @@ export default function SettingsPage() {
           }
         })
       })
-      if (!res.ok) throw new Error('Failed')
+      if (!settingsRes.ok) throw new Error('Failed to save settings')
+
+      // Save site stats
+      const statsRes = await fetch('/api/site-stats', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ stats: siteStats })
+      })
+      if (!statsRes.ok) throw new Error('Failed to save site stats')
+
       toast.success('Settings saved successfully')
     } catch {
       toast.error('Failed to save settings')
@@ -225,6 +259,39 @@ export default function SettingsPage() {
                 <p className="text-sm text-muted-foreground">Daily summary of all activity</p>
               </div>
               <Switch checked={notificationSettings.dailyDigest} onCheckedChange={v => setNotificationSettings({...notificationSettings, dailyDigest: v})} />
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Site Stats */}
+        <Card>
+          <CardHeader>
+            <div className="flex items-center gap-2">
+              <BarChart3 className="h-5 w-5" />
+              <CardTitle>Site Stats</CardTitle>
+            </div>
+            <CardDescription>Public statistics shown on the website (e.g., Jullie Ervaringen page)</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label>Companies Count</Label>
+                <Input
+                  value={siteStats.companiesCount}
+                  onChange={e => setSiteStats({...siteStats, companiesCount: e.target.value})}
+                  placeholder="80+"
+                />
+                <p className="text-xs text-muted-foreground mt-1">Displayed as &quot;Bedrijven&quot;</p>
+              </div>
+              <div>
+                <Label>Activities Count</Label>
+                <Input
+                  value={siteStats.activitiesCount}
+                  onChange={e => setSiteStats({...siteStats, activitiesCount: e.target.value})}
+                  placeholder="200+"
+                />
+                <p className="text-xs text-muted-foreground mt-1">Displayed as &quot;Uitjes&quot;</p>
+              </div>
             </div>
           </CardContent>
         </Card>
