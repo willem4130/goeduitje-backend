@@ -315,3 +315,195 @@ export type NewDrinksPricing = typeof drinksPricing.$inferInsert
 
 export type User = typeof users.$inferSelect
 export type NewUser = typeof users.$inferInsert
+
+// ============================================================
+// CONTENT MANAGEMENT TABLES (shared with frontend)
+// These tables are managed by frontend's Prisma migrations
+// Backend uses Drizzle for read/write access
+// ============================================================
+
+// FAQ entries
+export const faq = pgTable('FAQ', {
+  id: text('id').primaryKey(),
+  question: text('question').notNull(),
+  answer: text('answer').notNull(),
+  category: text('category').notNull(),
+  sortOrder: integer('sortOrder').default(0).notNull(),
+  isPublished: boolean('isPublished').default(true).notNull(),
+  createdAt: timestamp('createdAt').notNull().defaultNow(),
+  updatedAt: timestamp('updatedAt').notNull(),
+})
+
+// Team members
+export const teamMember = pgTable('TeamMember', {
+  id: text('id').primaryKey(),
+  name: text('name').notNull(),
+  role: text('role').notNull(),
+  origin: text('origin'),
+  bio: text('bio').notNull(),
+  quote: text('quote'),
+  image: text('image'),
+  sortOrder: integer('sortOrder').default(0).notNull(),
+  isPublished: boolean('isPublished').default(true).notNull(),
+  createdAt: timestamp('createdAt').notNull().defaultNow(),
+  updatedAt: timestamp('updatedAt').notNull(),
+})
+
+// Custom testimonials
+export const testimonial = pgTable('Testimonial', {
+  id: text('id').primaryKey(),
+  quote: text('quote').notNull(),
+  author: text('author').notNull(),
+  role: text('role'),
+  company: text('company'),
+  rating: integer('rating').default(5).notNull(),
+  image: text('image'),
+  isFeatured: boolean('isFeatured').default(false).notNull(),
+  isPublished: boolean('isPublished').default(true).notNull(),
+  createdAt: timestamp('createdAt').notNull().defaultNow(),
+  updatedAt: timestamp('updatedAt').notNull(),
+})
+
+// Recipes
+export const recipe = pgTable('Recipe', {
+  id: text('id').primaryKey(),
+  title: text('title').notNull(),
+  slug: text('slug').notNull().unique(),
+  description: text('description'),
+  imageUrl: text('imageUrl'),
+  prepTime: integer('prepTime'),
+  cookTime: integer('cookTime'),
+  servings: integer('servings'),
+  difficulty: text('difficulty'),
+  category: text('category'),
+  ingredients: jsonb('ingredients').$type<string[]>().default([]),
+  steps: jsonb('steps').$type<string[]>().default([]),
+  tips: text('tips'),
+  isPublished: boolean('isPublished').default(true).notNull(),
+  createdAt: timestamp('createdAt').notNull().defaultNow(),
+  updatedAt: timestamp('updatedAt').notNull(),
+})
+
+// Page content - CMS for editable text blocks
+export const pageContent = pgTable('PageContent', {
+  id: text('id').primaryKey(),
+  page: text('page').notNull(),
+  section: text('section').notNull(),
+  key: text('key').notNull(),
+  value: text('value').notNull(),
+  type: text('type').default('text').notNull(),
+  updatedAt: timestamp('updatedAt').notNull(),
+})
+
+// Google Reviews
+export const googleReview = pgTable('GoogleReview', {
+  id: text('id').primaryKey(),
+  googleReviewId: text('googleReviewId').notNull().unique(),
+  authorName: text('authorName').notNull(),
+  authorPhotoUrl: text('authorPhotoUrl'),
+  rating: integer('rating').notNull(),
+  text: text('text'),
+  relativeTime: text('relativeTime').notNull(),
+  reviewTime: timestamp('reviewTime').notNull(),
+  language: text('language').default('nl').notNull(),
+  sortOrder: text('sortOrder').notNull(),
+  isVisible: boolean('isVisible').default(true).notNull(),
+  fetchedAt: timestamp('fetchedAt').notNull().defaultNow(),
+  lastSeenAt: timestamp('lastSeenAt').notNull().defaultNow(),
+  createdAt: timestamp('createdAt').notNull().defaultNow(),
+  updatedAt: timestamp('updatedAt').notNull(),
+})
+
+// Workshop catalog
+export const workshop = pgTable('Workshop', {
+  id: text('id').primaryKey(),
+  slug: text('slug').notNull().unique(),
+  title: text('title').notNull(),
+  subtitle: text('subtitle').notNull(),
+  description: text('description').notNull(),
+  longDescription: text('longDescription'),
+  image: text('image'),
+  video: text('video'),
+  duration: text('duration').notNull(),
+  groupSize: text('groupSize').notNull(),
+  location: text('location').notNull(),
+  categories: jsonb('categories').$type<string[]>().default([]),
+  includes: jsonb('includes').$type<string[]>().default([]),
+  isPublished: boolean('isPublished').default(true).notNull(),
+  sortOrder: integer('sortOrder').default(0).notNull(),
+  createdAt: timestamp('createdAt').notNull().defaultNow(),
+  updatedAt: timestamp('updatedAt').notNull(),
+})
+
+// Workshop variants
+export const workshopVariant = pgTable('WorkshopVariant', {
+  id: text('id').primaryKey(),
+  workshopId: text('workshopId').notNull(),
+  name: text('name').notNull(),
+  description: text('description').notNull(),
+  duration: text('duration').notNull(),
+  includes: jsonb('includes').$type<string[]>().default([]),
+  sortOrder: integer('sortOrder').default(0).notNull(),
+  createdAt: timestamp('createdAt').notNull().defaultNow(),
+  updatedAt: timestamp('updatedAt').notNull(),
+})
+
+// Price tiers
+export const priceTier = pgTable('PriceTier', {
+  id: text('id').primaryKey(),
+  workshopId: text('workshopId').notNull(),
+  variantId: text('variantId'),
+  groupSize: text('groupSize').notNull(),
+  minParticipants: integer('minParticipants'),
+  maxParticipants: integer('maxParticipants'),
+  priceExclBtw: decimal('priceExclBtw', { precision: 10, scale: 2 }).notNull(),
+  priceInclBtw: decimal('priceInclBtw', { precision: 10, scale: 2 }).notNull(),
+  sortOrder: integer('sortOrder').default(0).notNull(),
+  createdAt: timestamp('createdAt').notNull().defaultNow(),
+  updatedAt: timestamp('updatedAt').notNull(),
+})
+
+// Contact form feedback
+export const contactFeedback = pgTable('Feedback', {
+  id: text('id').primaryKey(),
+  name: text('name').notNull(),
+  email: text('email').notNull(),
+  phone: text('phone'),
+  subject: text('subject'),
+  message: text('message').notNull(),
+  rating: integer('rating'),
+  isRead: boolean('isRead').default(false).notNull(),
+  createdAt: timestamp('createdAt').notNull().defaultNow(),
+  updatedAt: timestamp('updatedAt').notNull(),
+})
+
+// Type exports for content tables
+export type FAQ = typeof faq.$inferSelect
+export type NewFAQ = typeof faq.$inferInsert
+
+export type TeamMember = typeof teamMember.$inferSelect
+export type NewTeamMember = typeof teamMember.$inferInsert
+
+export type Testimonial = typeof testimonial.$inferSelect
+export type NewTestimonial = typeof testimonial.$inferInsert
+
+export type Recipe = typeof recipe.$inferSelect
+export type NewRecipe = typeof recipe.$inferInsert
+
+export type PageContent = typeof pageContent.$inferSelect
+export type NewPageContent = typeof pageContent.$inferInsert
+
+export type GoogleReviewRecord = typeof googleReview.$inferSelect
+export type NewGoogleReview = typeof googleReview.$inferInsert
+
+export type WorkshopCatalog = typeof workshop.$inferSelect
+export type NewWorkshopCatalog = typeof workshop.$inferInsert
+
+export type WorkshopVariantRecord = typeof workshopVariant.$inferSelect
+export type NewWorkshopVariant = typeof workshopVariant.$inferInsert
+
+export type PriceTierRecord = typeof priceTier.$inferSelect
+export type NewPriceTier = typeof priceTier.$inferInsert
+
+export type ContactFeedback = typeof contactFeedback.$inferSelect
+export type NewContactFeedback = typeof contactFeedback.$inferInsert

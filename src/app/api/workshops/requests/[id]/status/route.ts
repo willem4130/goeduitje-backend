@@ -142,7 +142,7 @@ export async function PATCH(
           automation: {
             emailSent: true,
             emailId: emailResult.id,
-            pdfUrl: blob.url,
+            // pdfUrl: blob.url, // Disabled - Blob storage not configured yet
           },
         })
       } catch (error) {

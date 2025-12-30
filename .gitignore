@@ -37,3 +37,5 @@ next-env.d.ts
 *.db
 *.db-journal
 dutch-queen.db
+.env.local.backup
+.env.production

@@ -27,7 +27,7 @@ structuredWorkbook.SheetNames.forEach((sheetName) => {
   const data = XLSX.utils.sheet_to_json(worksheet, { defval: null })
   console.log(`Rows: ${data.length}`)
   if (data.length > 0) {
-    console.log('Columns:', Object.keys(data[0]))
+    console.log('Columns:', Object.keys(data[0] as Record<string, unknown>))
     console.log('Sample row:', JSON.stringify(data[0], null, 2))
   }
 })
@@ -46,7 +46,7 @@ locationsWorkbook.SheetNames.forEach((sheetName) => {
   const data = XLSX.utils.sheet_to_json(worksheet, { defval: null })
   console.log(`Rows: ${data.length}`)
   if (data.length > 0) {
-    console.log('Columns:', Object.keys(data[0]))
+    console.log('Columns:', Object.keys(data[0] as Record<string, unknown>))
     console.log('Sample rows:')
     data.slice(0, 3).forEach((row, i) => {
       console.log(`Row ${i + 1}:`, JSON.stringify(row, null, 2))

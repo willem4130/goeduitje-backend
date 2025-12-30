@@ -45,46 +45,48 @@
 
 ## ⚠️ ABSOLUTE WARNINGS - READ FIRST
 
-### Repository Separation Rules
+### Architecture: Single Admin Dashboard
 
-**THIS REPOSITORY**:
-- Name: `goeduitje-backend` (to be created on GitHub)
-- Purpose: Workshop CMS, admin dashboard, quote generation
-- Port: **3003**
-- Database: **Separate PostgreSQL instance** (different from frontend)
-- Never contains frontend UI code
+**IMPORTANT (Dec 30, 2024)**: Both repos now share the SAME database. This backend is the SINGLE admin dashboard for ALL functionality.
 
-**FRONTEND REPOSITORY** (separate):
-- Name: `goeduitje-nl-rebuild`
-- Repository: https://github.com/willem4130/goeduitje-nl-rebuild.git
-- Port: **3000**
-- Database: **Separate Prisma database**
-- Never contains backend admin code
+| Repo | Purpose | Database | Port |
+|------|---------|----------|------|
+| **goeduitje-backend** (this) | ALL admin functionality | Shared Neon PostgreSQL | 3003 |
+| **goeduitje-nl-rebuild** | Public website only | Shared Neon PostgreSQL | 3000 |
 
-**NEVER COMMIT TO**:
-- https://github.com/willem4130/dutch-queen-admin.git
-- This repo was cloned as READ-ONLY reference for structure
-- We initialized a NEW git repository (removed original .git)
-- This is now a completely independent project
+**Database Sharing**:
+- Frontend: Uses Prisma ORM (manages all migrations)
+- Backend: Uses Drizzle ORM (read/write, NO migrations)
+- Both connect to same DATABASE_URL
 
-### Backend vs Frontend Commits
+### What This Backend Manages
 
-**Backend commits (this repo):**
+**Workshop Operations:**
 - Workshop request management
 - Quote generation (AI + PDF)
-- Confirmed workshop execution tracking
-- Feedback collection
-- Media gallery admin
+- Confirmed workshop tracking
 - Email automation (Resend)
-- Admin dashboard UI
 
-**Frontend commits (goeduitje-nl-rebuild):**
-- Public-facing website
-- Workshop request form
-- Activity pages
-- Contact pages
-- Public photo gallery
-- Never contains admin/CMS code
+**Website Content (NEW):**
+- FAQ management → `/content/faq`
+- Team members → `/content/team`
+- Testimonials → `/content/testimonials`
+- Recipes → `/content/recipes`
+- Page content → `/content/pages`
+
+**Settings:**
+- Activities & pricing tiers
+- Locations & drinks pricing
+- Quote templates
+
+### Frontend (goeduitje-nl-rebuild)
+
+**Public website only - NO admin pages:**
+- Workshop catalog display
+- Booking form
+- FAQ page (reads from DB)
+- Team page (reads from DB)
+- Contact form
 
 ## Project Overview
 

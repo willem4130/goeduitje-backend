@@ -15,6 +15,12 @@ import {
   Database,
   MapPin,
   DollarSign,
+  Globe,
+  HelpCircle,
+  Users,
+  Quote,
+  ChefHat,
+  FileEdit,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 
@@ -57,7 +63,7 @@ const navSections = [
     ],
   },
   {
-    title: 'Content Management',
+    title: 'Quote Settings',
     items: [
       {
         title: 'Workshop Activities',
@@ -73,6 +79,36 @@ const navSections = [
         title: 'Pricing Tiers',
         href: '/pricing',
         icon: DollarSign,
+      },
+    ],
+  },
+  {
+    title: 'Website Content',
+    items: [
+      {
+        title: 'FAQ',
+        href: '/content/faq',
+        icon: HelpCircle,
+      },
+      {
+        title: 'Team Members',
+        href: '/content/team',
+        icon: Users,
+      },
+      {
+        title: 'Testimonials',
+        href: '/content/testimonials',
+        icon: Quote,
+      },
+      {
+        title: 'Recipes',
+        href: '/content/recipes',
+        icon: ChefHat,
+      },
+      {
+        title: 'Page Content',
+        href: '/content/pages',
+        icon: FileEdit,
       },
     ],
   },
