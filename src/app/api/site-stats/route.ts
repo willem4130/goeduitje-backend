@@ -4,10 +4,19 @@ import { pageContent } from '@/db/schema'
 import { eq, and } from 'drizzle-orm'
 import { randomUUID } from 'crypto'
 
-// Default site stats
+// Default site stats - organized by category
 const DEFAULT_STATS = {
+  // Jullie Ervaringen page stats
   companiesCount: '80+',
-  activitiesCount: '200+'
+  activitiesCount: '200+',
+  // Homepage social proof stats
+  teamsCount: '150+',
+  rebookRate: '95%',
+  // Hero video KPI stats
+  heroActivitiesCount: '41',
+  heroParticipantsCount: '516',
+  // USP badges (comma-separated)
+  uspBadges: 'Maak sociale impact,Op locatie naar keuze,Op maat'
 }
 
 // GET - Fetch site stats (public endpoint)
@@ -17,14 +26,13 @@ export async function GET() {
       .from(pageContent)
       .where(eq(pageContent.page, 'site-stats'))
 
-    // Build stats object from database
-    const stats = { ...DEFAULT_STATS }
+    // Build stats object from database, starting with defaults
+    const stats: Record<string, string> = { ...DEFAULT_STATS }
 
+    // Override with database values
     for (const item of items) {
-      if (item.key === 'companiesCount') {
-        stats.companiesCount = item.value
-      } else if (item.key === 'activitiesCount') {
-        stats.activitiesCount = item.value
+      if (item.key in DEFAULT_STATS) {
+        stats[item.key] = item.value
       }
     }
 
@@ -39,56 +47,38 @@ export async function GET() {
 export async function PUT(request: Request) {
   try {
     const body = await request.json()
-    const { stats } = body as { stats: typeof DEFAULT_STATS }
+    const { stats } = body as { stats: Record<string, string> }
 
-    // Upsert companiesCount
-    const existingCompanies = await db.select()
-      .from(pageContent)
-      .where(and(
-        eq(pageContent.page, 'site-stats'),
-        eq(pageContent.section, 'public'),
-        eq(pageContent.key, 'companiesCount')
-      ))
+    // Valid keys that can be updated
+    const validKeys = Object.keys(DEFAULT_STATS)
 
-    if (existingCompanies.length > 0) {
-      await db.update(pageContent)
-        .set({ value: stats.companiesCount, updatedAt: new Date() })
-        .where(eq(pageContent.id, existingCompanies[0].id))
-    } else {
-      await db.insert(pageContent).values({
-        id: randomUUID(),
-        page: 'site-stats',
-        section: 'public',
-        key: 'companiesCount',
-        value: stats.companiesCount,
-        type: 'text',
-        updatedAt: new Date()
-      })
-    }
+    // Upsert each stat key
+    for (const [key, value] of Object.entries(stats)) {
+      if (!validKeys.includes(key)) continue
 
-    // Upsert activitiesCount
-    const existingActivities = await db.select()
-      .from(pageContent)
-      .where(and(
-        eq(pageContent.page, 'site-stats'),
-        eq(pageContent.section, 'public'),
-        eq(pageContent.key, 'activitiesCount')
-      ))
+      const existing = await db.select()
+        .from(pageContent)
+        .where(and(
+          eq(pageContent.page, 'site-stats'),
+          eq(pageContent.section, 'public'),
+          eq(pageContent.key, key)
+        ))
 
-    if (existingActivities.length > 0) {
-      await db.update(pageContent)
-        .set({ value: stats.activitiesCount, updatedAt: new Date() })
-        .where(eq(pageContent.id, existingActivities[0].id))
-    } else {
-      await db.insert(pageContent).values({
-        id: randomUUID(),
-        page: 'site-stats',
-        section: 'public',
-        key: 'activitiesCount',
-        value: stats.activitiesCount,
-        type: 'text',
-        updatedAt: new Date()
-      })
+      if (existing.length > 0) {
+        await db.update(pageContent)
+          .set({ value, updatedAt: new Date() })
+          .where(eq(pageContent.id, existing[0].id))
+      } else {
+        await db.insert(pageContent).values({
+          id: randomUUID(),
+          page: 'site-stats',
+          section: 'public',
+          key,
+          value,
+          type: 'text',
+          updatedAt: new Date()
+        })
+      }
     }
 
     return NextResponse.json({ success: true })

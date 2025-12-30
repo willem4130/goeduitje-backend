@@ -31,8 +31,17 @@ type Settings = {
 }
 
 type SiteStats = {
+  // Jullie Ervaringen page
   companiesCount: string
   activitiesCount: string
+  // Homepage social proof
+  teamsCount: string
+  rebookRate: string
+  // Hero video KPIs
+  heroActivitiesCount: string
+  heroParticipantsCount: string
+  // USP badges (comma-separated)
+  uspBadges: string
 }
 
 const DEFAULT_SETTINGS: Settings = {
@@ -57,7 +66,12 @@ const DEFAULT_SETTINGS: Settings = {
 
 const DEFAULT_SITE_STATS: SiteStats = {
   companiesCount: '80+',
-  activitiesCount: '200+'
+  activitiesCount: '200+',
+  teamsCount: '150+',
+  rebookRate: '95%',
+  heroActivitiesCount: '41',
+  heroParticipantsCount: '516',
+  uspBadges: 'Maak sociale impact,Op locatie naar keuze,Op maat'
 }
 
 export default function SettingsPage() {
@@ -270,27 +284,101 @@ export default function SettingsPage() {
               <BarChart3 className="h-5 w-5" />
               <CardTitle>Site Stats</CardTitle>
             </div>
-            <CardDescription>Public statistics shown on the website (e.g., Jullie Ervaringen page)</CardDescription>
+            <CardDescription>Public statistics shown on the website</CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <Label>Companies Count</Label>
-                <Input
-                  value={siteStats.companiesCount}
-                  onChange={e => setSiteStats({...siteStats, companiesCount: e.target.value})}
-                  placeholder="80+"
-                />
-                <p className="text-xs text-muted-foreground mt-1">Displayed as &quot;Bedrijven&quot;</p>
+          <CardContent className="space-y-6">
+            {/* Jullie Ervaringen page stats */}
+            <div>
+              <h4 className="font-medium mb-3">Jullie Ervaringen Page</h4>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label>Companies Count</Label>
+                  <Input
+                    value={siteStats.companiesCount}
+                    onChange={e => setSiteStats({...siteStats, companiesCount: e.target.value})}
+                    placeholder="80+"
+                  />
+                  <p className="text-xs text-muted-foreground mt-1">Displayed as &quot;Bedrijven&quot;</p>
+                </div>
+                <div>
+                  <Label>Activities Count</Label>
+                  <Input
+                    value={siteStats.activitiesCount}
+                    onChange={e => setSiteStats({...siteStats, activitiesCount: e.target.value})}
+                    placeholder="200+"
+                  />
+                  <p className="text-xs text-muted-foreground mt-1">Displayed as &quot;Uitjes&quot;</p>
+                </div>
               </div>
+            </div>
+
+            <Separator />
+
+            {/* Homepage social proof stats */}
+            <div>
+              <h4 className="font-medium mb-3">Homepage - Social Proof Stats</h4>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label>Teams Count</Label>
+                  <Input
+                    value={siteStats.teamsCount}
+                    onChange={e => setSiteStats({...siteStats, teamsCount: e.target.value})}
+                    placeholder="150+"
+                  />
+                  <p className="text-xs text-muted-foreground mt-1">Next to configurator (e.g., &quot;150+ Teams&quot;)</p>
+                </div>
+                <div>
+                  <Label>Rebook Rate</Label>
+                  <Input
+                    value={siteStats.rebookRate}
+                    onChange={e => setSiteStats({...siteStats, rebookRate: e.target.value})}
+                    placeholder="95%"
+                  />
+                  <p className="text-xs text-muted-foreground mt-1">e.g., &quot;95% Rebook&quot;</p>
+                </div>
+              </div>
+            </div>
+
+            <Separator />
+
+            {/* Hero video KPI stats */}
+            <div>
+              <h4 className="font-medium mb-3">Homepage - Hero Video KPIs</h4>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label>Aantal Uitjes</Label>
+                  <Input
+                    value={siteStats.heroActivitiesCount}
+                    onChange={e => setSiteStats({...siteStats, heroActivitiesCount: e.target.value})}
+                    placeholder="41"
+                  />
+                  <p className="text-xs text-muted-foreground mt-1">Animated KPI in hero section</p>
+                </div>
+                <div>
+                  <Label>Aantal Deelnemers</Label>
+                  <Input
+                    value={siteStats.heroParticipantsCount}
+                    onChange={e => setSiteStats({...siteStats, heroParticipantsCount: e.target.value})}
+                    placeholder="516"
+                  />
+                  <p className="text-xs text-muted-foreground mt-1">Animated KPI in hero section</p>
+                </div>
+              </div>
+            </div>
+
+            <Separator />
+
+            {/* USP badges */}
+            <div>
+              <h4 className="font-medium mb-3">Homepage - USP Badges</h4>
               <div>
-                <Label>Activities Count</Label>
+                <Label>USP Badges (comma-separated)</Label>
                 <Input
-                  value={siteStats.activitiesCount}
-                  onChange={e => setSiteStats({...siteStats, activitiesCount: e.target.value})}
-                  placeholder="200+"
+                  value={siteStats.uspBadges}
+                  onChange={e => setSiteStats({...siteStats, uspBadges: e.target.value})}
+                  placeholder="Maak sociale impact,Op locatie naar keuze,Op maat"
                 />
-                <p className="text-xs text-muted-foreground mt-1">Displayed as &quot;Uitjes&quot;</p>
+                <p className="text-xs text-muted-foreground mt-1">Three badges shown in hero section, separated by commas</p>
               </div>
             </div>
           </CardContent>
