@@ -10,10 +10,15 @@
  */
 
 import { put } from '@vercel/blob'
-import { db } from '../src/db'
-import { mediaGallery } from '../src/db/schema'
+import { db } from '../src/db/index.js'
+import { mediaGallery } from '../src/db/schema.js'
 import * as fs from 'fs'
 import * as path from 'path'
+import { fileURLToPath } from 'url'
+
+// ES module compatibility
+const __filename = fileURLToPath(import.meta.url)
+const __dirname = path.dirname(__filename)
 
 // Path to frontend public folder
 const FRONTEND_PUBLIC = path.resolve(__dirname, '../../goeduitje-nl-rebuild/public')
