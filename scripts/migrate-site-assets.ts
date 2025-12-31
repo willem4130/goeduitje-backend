@@ -162,6 +162,7 @@ async function migrateAsset(asset: typeof SITE_ASSETS[0]) {
   console.log(`✅ Uploaded: ${blob.url}`)
 
   // Create database record
+  const now = new Date()
   const [media] = await db.insert(mediaGallery).values({
     blobUrl: blob.url,
     fileName: path.basename(asset.blobPath),
@@ -172,6 +173,9 @@ async function migrateAsset(asset: typeof SITE_ASSETS[0]) {
     altText: asset.altText,
     isPublic: true,
     showOnWebsite: true,
+    uploadedAt: now,
+    createdAt: now,
+    updatedAt: now,
   }).returning()
 
   console.log(`💾 DB record created: ID ${media.id}`)
