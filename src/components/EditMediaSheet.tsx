@@ -28,17 +28,18 @@ import { Download, ZoomIn, X } from 'lucide-react'
 
 interface MediaItem {
   id: number
-  title: string | null
-  description: string | null
-  url: string
-  thumbnailUrl: string | null
-  type: string
+  blobUrl: string
+  fileName: string
+  caption: string | null
+  altText: string | null
   category: string | null
   tags: string[] | null
   width: number | null
   height: number | null
   fileSize: number | null
-  mimeType: string | null
+  mimeType: string
+  showOnWebsite: boolean
+  featuredOnHomepage: boolean
 }
 
 interface EditMediaSheetProps {
@@ -53,9 +54,11 @@ export function EditMediaSheet({ mediaId, open, onOpenChange, onSuccess }: EditM
   const [mediaItem, setMediaItem] = useState<MediaItem | null>(null)
   const [imagePreviewOpen, setImagePreviewOpen] = useState(false)
   const [formData, setFormData] = useState({
-    title: '',
-    description: '',
-    category: 'promo',
+    caption: '',
+    altText: '',
+    category: 'workshop',
+    showOnWebsite: false,
+    featuredOnHomepage: false,
     tags: [] as string[],
   })
   const [tagsInput, setTagsInput] = useState('')
@@ -67,15 +70,24 @@ export function EditMediaSheet({ mediaId, open, onOpenChange, onSuccess }: EditM
         .then((data: MediaItem) => {
           setMediaItem(data)
           setFormData({
-            title: data.title || '',
-            description: data.description || '',
-            category: data.category || 'promo',
+            caption: data.caption || '',
+            altText: data.altText || '',
+            category: data.category || 'workshop',
+            showOnWebsite: data.showOnWebsite || false,
+            featuredOnHomepage: data.featuredOnHomepage || false,
             tags: data.tags || [],
           })
           setTagsInput((data.tags || []).join(', '))
         })
     }
   }, [mediaId, open])
+
+  const getMediaType = (mimeType: string) => {
+    if (mimeType.startsWith('image/')) return 'image'
+    if (mimeType.startsWith('video/')) return 'video'
+    if (mimeType.startsWith('audio/')) return 'audio'
+    return 'file'
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -115,8 +127,8 @@ export function EditMediaSheet({ mediaId, open, onOpenChange, onSuccess }: EditM
     if (!mediaItem) return
 
     const link = document.createElement('a')
-    link.href = mediaItem.url
-    link.download = mediaItem.title || `media-${mediaItem.id}`
+    link.href = mediaItem.blobUrl
+    link.download = mediaItem.fileName || `media-${mediaItem.id}`
     document.body.appendChild(link)
     link.click()
     document.body.removeChild(link)
@@ -148,13 +160,13 @@ export function EditMediaSheet({ mediaId, open, onOpenChange, onSuccess }: EditM
           {mediaItem && (
             <div className="mt-6 space-y-6">
               {/* Image Preview Section */}
-              {mediaItem.type === 'image' && (
+              {getMediaType(mediaItem.mimeType) === 'image' && (
                 <div className="space-y-2">
                   <Label>Preview</Label>
                   <div className="relative group border rounded-lg overflow-hidden bg-muted">
                     <img
-                      src={mediaItem.thumbnailUrl || mediaItem.url}
-                      alt={mediaItem.title || 'Media preview'}
+                      src={mediaItem.blobUrl}
+                      alt={mediaItem.altText || mediaItem.caption || 'Media preview'}
                       className="w-full h-auto object-contain max-h-64"
                     />
                     <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
@@ -196,23 +208,22 @@ export function EditMediaSheet({ mediaId, open, onOpenChange, onSuccess }: EditM
               {/* Edit Form */}
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="title">Title *</Label>
+                  <Label htmlFor="caption">Caption</Label>
                   <Input
-                    id="title"
-                    value={formData.title}
-                    onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                    placeholder="Enter media title"
-                    required
+                    id="caption"
+                    value={formData.caption}
+                    onChange={(e) => setFormData({ ...formData, caption: e.target.value })}
+                    placeholder="Enter media caption"
                   />
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="description">Description</Label>
+                  <Label htmlFor="altText">Alt Text (Accessibility)</Label>
                   <Textarea
-                    id="description"
-                    value={formData.description}
-                    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                    placeholder="Optional description or alt text for accessibility"
+                    id="altText"
+                    value={formData.altText}
+                    onChange={(e) => setFormData({ ...formData, altText: e.target.value })}
+                    placeholder="Describe the image for screen readers"
                     rows={3}
                   />
                   <p className="text-xs text-muted-foreground">
@@ -230,14 +241,49 @@ export function EditMediaSheet({ mediaId, open, onOpenChange, onSuccess }: EditM
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="promo">Promo</SelectItem>
-                      <SelectItem value="live">Live</SelectItem>
-                      <SelectItem value="press">Press</SelectItem>
-                      <SelectItem value="social">Social</SelectItem>
-                      <SelectItem value="gallery">Gallery</SelectItem>
-                      <SelectItem value="hero">Hero</SelectItem>
+                      {/* Content Images */}
+                      <SelectItem value="workshop">Workshop</SelectItem>
+                      <SelectItem value="setup">Setup</SelectItem>
+                      <SelectItem value="cooking">Cooking</SelectItem>
+                      <SelectItem value="results">Results</SelectItem>
+                      <SelectItem value="group">Group</SelectItem>
+                      <SelectItem value="food">Food</SelectItem>
+                      <SelectItem value="venue">Venue</SelectItem>
+                      {/* Site Assets */}
+                      <SelectItem value="site-hero-video">🎬 Hero Video</SelectItem>
+                      <SelectItem value="site-hero-poster">🖼️ Hero Poster</SelectItem>
+                      <SelectItem value="site-logo">🏷️ Logo</SelectItem>
+                      <SelectItem value="site-og">📱 Social/OG Image</SelectItem>
                     </SelectContent>
                   </Select>
+                </div>
+
+                <div className="space-y-3">
+                  <Label>Display Options</Label>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="checkbox"
+                      id="showOnWebsite"
+                      checked={formData.showOnWebsite}
+                      onChange={(e) => setFormData({ ...formData, showOnWebsite: e.target.checked })}
+                      className="h-4 w-4 rounded border-gray-300"
+                    />
+                    <Label htmlFor="showOnWebsite" className="font-normal cursor-pointer">
+                      Show on website
+                    </Label>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="checkbox"
+                      id="featuredOnHomepage"
+                      checked={formData.featuredOnHomepage}
+                      onChange={(e) => setFormData({ ...formData, featuredOnHomepage: e.target.checked })}
+                      className="h-4 w-4 rounded border-gray-300"
+                    />
+                    <Label htmlFor="featuredOnHomepage" className="font-normal cursor-pointer">
+                      Feature on homepage
+                    </Label>
+                  </div>
                 </div>
 
                 <div className="space-y-2">
@@ -246,7 +292,7 @@ export function EditMediaSheet({ mediaId, open, onOpenChange, onSuccess }: EditM
                     id="tags"
                     value={tagsInput}
                     onChange={(e) => setTagsInput(e.target.value)}
-                    placeholder="Enter tags separated by commas (e.g., concert, 2024, festival)"
+                    placeholder="Enter tags separated by commas (e.g., team, outdoor, 2024)"
                   />
                   <p className="text-xs text-muted-foreground">
                     Separate multiple tags with commas
@@ -286,8 +332,8 @@ export function EditMediaSheet({ mediaId, open, onOpenChange, onSuccess }: EditM
             </button>
             {mediaItem && (
               <img
-                src={mediaItem.url}
-                alt={mediaItem.title || 'Media preview'}
+                src={mediaItem.blobUrl}
+                alt={mediaItem.altText || mediaItem.caption || 'Media preview'}
                 className="w-full h-auto max-h-[90vh] object-contain"
               />
             )}

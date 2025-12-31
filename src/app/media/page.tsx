@@ -36,21 +36,26 @@ import { CSS } from '@dnd-kit/utilities'
 
 type MediaItem = {
   id: number
-  bandId: string
-  title: string | null
-  description: string | null
-  url: string
-  thumbnailUrl: string | null
-  type: string
-  category: string | null
-  tags: string[] | null
+  workshopId: number | null
+  blobUrl: string
+  fileName: string
   fileSize: number | null
-  mimeType: string | null
+  mimeType: string
   width: number | null
   height: number | null
+  caption: string | null
+  altText: string | null
+  takenAt: Date | null
   displayOrder: number
+  category: string | null
+  tags: string[] | null
+  isPublic: boolean
+  showOnWebsite: boolean
+  featuredOnHomepage: boolean
   uploadedBy: string | null
+  uploadedAt: Date
   createdAt: Date
+  updatedAt: Date
 }
 
 function SortableMediaCard({ item, onEdit, onDelete }: {
@@ -73,17 +78,18 @@ function SortableMediaCard({ item, onEdit, onDelete }: {
     opacity: isDragging ? 0.5 : 1,
   }
 
-  const getTypeIcon = (type: string) => {
-    switch (type) {
-      case 'image':
-        return <ImageIcon className="w-4 h-4" />
-      case 'video':
-        return <Video className="w-4 h-4" />
-      case 'audio':
-        return <Music className="w-4 h-4" />
-      default:
-        return <ImageIcon className="w-4 h-4" />
-    }
+  const getTypeIcon = (mimeType: string) => {
+    if (mimeType.startsWith('image/')) return <ImageIcon className="w-4 h-4" />
+    if (mimeType.startsWith('video/')) return <Video className="w-4 h-4" />
+    if (mimeType.startsWith('audio/')) return <Music className="w-4 h-4" />
+    return <ImageIcon className="w-4 h-4" />
+  }
+
+  const getMediaType = (mimeType: string) => {
+    if (mimeType.startsWith('image/')) return 'image'
+    if (mimeType.startsWith('video/')) return 'video'
+    if (mimeType.startsWith('audio/')) return 'audio'
+    return 'file'
   }
 
   const formatFileSize = (bytes: number | null) => {
@@ -141,6 +147,8 @@ function SortableMediaCard({ item, onEdit, onDelete }: {
     return { aspectRatio: `${item.width} / ${item.height}` }
   }
 
+  const mediaType = getMediaType(item.mimeType)
+
   return (
     <Card ref={setNodeRef} style={style} className="overflow-hidden group relative">
       <div className="absolute top-2 left-2 z-10 cursor-grab active:cursor-grabbing" {...attributes} {...listeners}>
@@ -148,20 +156,29 @@ function SortableMediaCard({ item, onEdit, onDelete }: {
           <GripVertical className="w-4 h-4 text-muted-foreground" />
         </div>
       </div>
+      {/* Website visibility badges */}
+      <div className="absolute top-2 right-2 z-10 flex gap-1">
+        {item.showOnWebsite && (
+          <Badge variant="default" className="text-[10px] px-1.5 py-0.5 bg-green-600">Web</Badge>
+        )}
+        {item.featuredOnHomepage && (
+          <Badge variant="default" className="text-[10px] px-1.5 py-0.5 bg-yellow-600">Home</Badge>
+        )}
+      </div>
       <div
         className="relative bg-muted flex items-center justify-center"
-        style={item.type === 'image' && item.width && item.height ? getAspectRatioStyle() : { aspectRatio: '16 / 9' }}
+        style={mediaType === 'image' && item.width && item.height ? getAspectRatioStyle() : { aspectRatio: '16 / 9' }}
       >
-        {item.type === 'image' ? (
+        {mediaType === 'image' ? (
           <img
-            src={item.thumbnailUrl || item.url}
-            alt={item.title || 'Media'}
+            src={item.blobUrl}
+            alt={item.altText || item.caption || item.fileName}
             className="w-full h-full object-cover"
           />
         ) : (
           <div className="flex flex-col items-center gap-2">
-            {getTypeIcon(item.type)}
-            <p className="text-sm text-muted-foreground capitalize">{item.type}</p>
+            {getTypeIcon(item.mimeType)}
+            <p className="text-sm text-muted-foreground capitalize">{mediaType}</p>
           </div>
         )}
         <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
@@ -180,21 +197,23 @@ function SortableMediaCard({ item, onEdit, onDelete }: {
         </div>
       </div>
       <div className="p-4">
-        <h3 className="font-semibold truncate">
-          {item.title || 'Untitled'}
+        <h3 className="font-semibold truncate" title={item.fileName}>
+          {item.caption || item.fileName}
         </h3>
-        {item.description && (
+        {item.altText && (
           <p className="text-sm text-muted-foreground truncate mt-1">
-            {item.description}
+            {item.altText}
           </p>
         )}
         <div className="flex flex-wrap gap-2 mt-3">
-          <Badge variant={item.bandId === 'full-band' ? 'default' : 'secondary'} className="text-xs">
-            {item.bandId === 'full-band' ? 'Full Band' : 'Unplugged'}
-          </Badge>
           {item.category && (
-            <Badge variant="outline" className="text-xs capitalize">
-              {item.category}
+            <Badge
+              variant={item.category.startsWith('site-') ? 'default' : 'outline'}
+              className={`text-xs ${item.category.startsWith('site-') ? 'bg-purple-600' : 'capitalize'}`}
+            >
+              {item.category.startsWith('site-')
+                ? item.category.replace('site-', '').replace('-', ' ')
+                : item.category}
             </Badge>
           )}
         </div>
@@ -231,9 +250,9 @@ function SortableMediaCard({ item, onEdit, onDelete }: {
 export default function MediaGallery() {
   const [media, setMedia] = useState<MediaItem[]>([])
   const [loading, setLoading] = useState(true)
-  const [filter, setFilter] = useState<'all' | 'full-band' | 'unplugged'>('all')
   const [typeFilter, setTypeFilter] = useState<'all' | 'image' | 'video' | 'audio'>('all')
   const [categoryFilter, setCategoryFilter] = useState<string>('all')
+  const [websiteFilter, setWebsiteFilter] = useState<'all' | 'website' | 'homepage'>('all')
   const [searchQuery, setSearchQuery] = useState('')
   const [uploadSheetOpen, setUploadSheetOpen] = useState(false)
   const [editSheetOpen, setEditSheetOpen] = useState(false)
@@ -248,9 +267,10 @@ export default function MediaGallery() {
 
   const fetchMedia = () => {
     const params = new URLSearchParams()
-    if (filter !== 'all') params.append('bandId', filter)
     if (typeFilter !== 'all') params.append('type', typeFilter)
     if (categoryFilter !== 'all') params.append('category', categoryFilter)
+    if (websiteFilter === 'website') params.append('showOnWebsite', 'true')
+    if (websiteFilter === 'homepage') params.append('featuredOnHomepage', 'true')
     if (searchQuery) params.append('search', searchQuery)
 
     fetch(`/api/media?${params}`)
@@ -263,7 +283,7 @@ export default function MediaGallery() {
 
   useEffect(() => {
     fetchMedia()
-  }, [filter, typeFilter, categoryFilter])
+  }, [typeFilter, categoryFilter, websiteFilter])
 
   const handleSearch = () => {
     fetchMedia()
@@ -374,35 +394,35 @@ export default function MediaGallery() {
 
         <div className="flex flex-wrap gap-6 items-center">
           <div className="flex items-center gap-2">
-            <label className="text-sm font-medium">Band:</label>
+            <label className="text-sm font-medium">Show on:</label>
             <div className="flex gap-2">
               <Button
-                variant={filter === 'all' ? 'default' : 'outline'}
+                variant={websiteFilter === 'all' ? 'default' : 'outline'}
                 size="sm"
-                onClick={() => setFilter('all')}
+                onClick={() => setWebsiteFilter('all')}
               >
                 All
               </Button>
               <Button
-                variant={filter === 'full-band' ? 'default' : 'outline'}
+                variant={websiteFilter === 'website' ? 'default' : 'outline'}
                 size="sm"
-                onClick={() => setFilter('full-band')}
+                onClick={() => setWebsiteFilter('website')}
               >
-                Full Band
+                Website
               </Button>
               <Button
-                variant={filter === 'unplugged' ? 'default' : 'outline'}
+                variant={websiteFilter === 'homepage' ? 'default' : 'outline'}
                 size="sm"
-                onClick={() => setFilter('unplugged')}
+                onClick={() => setWebsiteFilter('homepage')}
               >
-                Unplugged
+                Homepage
               </Button>
             </div>
           </div>
 
           <div className="flex items-center gap-2">
             <label className="text-sm font-medium">Type:</label>
-            <Select value={typeFilter} onValueChange={(value: any) => setTypeFilter(value)}>
+            <Select value={typeFilter} onValueChange={(value: 'all' | 'image' | 'video' | 'audio') => setTypeFilter(value)}>
               <SelectTrigger className="w-[120px]">
                 <SelectValue />
               </SelectTrigger>
@@ -418,15 +438,24 @@ export default function MediaGallery() {
           <div className="flex items-center gap-2">
             <label className="text-sm font-medium">Category:</label>
             <Select value={categoryFilter} onValueChange={setCategoryFilter}>
-              <SelectTrigger className="w-[140px]">
+              <SelectTrigger className="w-[160px]">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All</SelectItem>
-                <SelectItem value="promo">Promo</SelectItem>
-                <SelectItem value="live">Live</SelectItem>
-                <SelectItem value="press">Press</SelectItem>
-                <SelectItem value="social">Social</SelectItem>
+                {/* Content Images */}
+                <SelectItem value="workshop">Workshop</SelectItem>
+                <SelectItem value="setup">Setup</SelectItem>
+                <SelectItem value="cooking">Cooking</SelectItem>
+                <SelectItem value="results">Results</SelectItem>
+                <SelectItem value="group">Group</SelectItem>
+                <SelectItem value="food">Food</SelectItem>
+                <SelectItem value="venue">Venue</SelectItem>
+                {/* Site Assets */}
+                <SelectItem value="site-hero-video">🎬 Hero Video</SelectItem>
+                <SelectItem value="site-hero-poster">🖼️ Hero Poster</SelectItem>
+                <SelectItem value="site-logo">🏷️ Logo</SelectItem>
+                <SelectItem value="site-og">📱 Social/OG</SelectItem>
               </SelectContent>
             </Select>
           </div>

@@ -35,11 +35,11 @@ export function UploadMediaSheet({ open, onOpenChange, onSuccess }: UploadMediaS
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   const [formData, setFormData] = useState({
-    bandId: 'full-band',
-    title: '',
-    description: '',
-    category: 'promo',
-    tags: [] as string[],
+    caption: '',
+    altText: '',
+    category: 'workshop',
+    showOnWebsite: false,
+    featuredOnHomepage: false,
   })
 
   // Handle file selection
@@ -62,12 +62,13 @@ export function UploadMediaSheet({ open, onOpenChange, onSuccess }: UploadMediaS
       setPreviewUrl(null)
     }
 
-    // Auto-populate title from filename
-    if (!formData.title) {
+    // Auto-populate caption from filename
+    if (!formData.caption) {
       const fileName = file.name.replace(/\.[^/.]+$/, '') // Remove extension
-      setFormData({ ...formData, title: fileName })
+      const prettyName = fileName.replace(/[-_]/g, ' ').replace(/\b\w/g, c => c.toUpperCase())
+      setFormData(prev => ({ ...prev, caption: prettyName }))
     }
-  }, [formData])
+  }, [formData.caption])
 
   // Handle drag and drop
   const handleDragOver = useCallback((e: React.DragEvent) => {
@@ -117,16 +118,17 @@ export function UploadMediaSheet({ open, onOpenChange, onSuccess }: UploadMediaS
     setUploadProgress(0)
 
     try {
-      // Create FormData
+      // Create FormData for Vercel Blob upload
       const uploadData = new FormData()
       uploadData.append('file', selectedFile)
-      uploadData.append('bandId', formData.bandId)
-      uploadData.append('title', formData.title || selectedFile.name)
-      uploadData.append('description', formData.description)
+      uploadData.append('caption', formData.caption)
+      uploadData.append('altText', formData.altText)
       uploadData.append('category', formData.category)
+      uploadData.append('showOnWebsite', String(formData.showOnWebsite))
+      uploadData.append('featuredOnHomepage', String(formData.featuredOnHomepage))
 
       // Upload to API
-      const response = await fetch('/api/media', {
+      const response = await fetch('/api/media/upload', {
         method: 'POST',
         body: uploadData,
       })
@@ -142,11 +144,11 @@ export function UploadMediaSheet({ open, onOpenChange, onSuccess }: UploadMediaS
 
       // Reset form
       setFormData({
-        bandId: 'full-band',
-        title: '',
-        description: '',
-        category: 'promo',
-        tags: [],
+        caption: '',
+        altText: '',
+        category: 'workshop',
+        showOnWebsite: false,
+        featuredOnHomepage: false,
       })
       clearFile()
     } catch (error) {
@@ -257,40 +259,23 @@ export function UploadMediaSheet({ open, onOpenChange, onSuccess }: UploadMediaS
           )}
 
           <div className="space-y-2">
-            <Label htmlFor="bandId">Band *</Label>
-            <Select
-              value={formData.bandId}
-              onValueChange={(value) => setFormData({ ...formData, bandId: value })}
-              disabled={loading}
-            >
-              <SelectTrigger id="bandId">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="full-band">Full Band</SelectItem>
-                <SelectItem value="unplugged">Unplugged</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="title">Title</Label>
+            <Label htmlFor="caption">Caption</Label>
             <Input
-              id="title"
-              value={formData.title}
-              onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+              id="caption"
+              value={formData.caption}
+              onChange={(e) => setFormData({ ...formData, caption: e.target.value })}
               placeholder="Auto-populated from filename"
               disabled={loading}
             />
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="description">Description</Label>
+            <Label htmlFor="altText">Alt Text (Accessibility)</Label>
             <Input
-              id="description"
-              value={formData.description}
-              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-              placeholder="Optional description"
+              id="altText"
+              value={formData.altText}
+              onChange={(e) => setFormData({ ...formData, altText: e.target.value })}
+              placeholder="Describe the image for screen readers"
               disabled={loading}
             />
           </div>
@@ -306,19 +291,51 @@ export function UploadMediaSheet({ open, onOpenChange, onSuccess }: UploadMediaS
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="gallery">Gallery</SelectItem>
-                <SelectItem value="hero">Hero</SelectItem>
-                <SelectItem value="about">About</SelectItem>
-                <SelectItem value="shows">Shows</SelectItem>
-                <SelectItem value="contact">Contact</SelectItem>
-                <SelectItem value="logo">Logo</SelectItem>
-                <SelectItem value="promo">Promo</SelectItem>
-                <SelectItem value="live">Live</SelectItem>
-                <SelectItem value="press">Press</SelectItem>
-                <SelectItem value="social">Social</SelectItem>
-                <SelectItem value="other">Other</SelectItem>
+                {/* Content Images */}
+                <SelectItem value="workshop">Workshop</SelectItem>
+                <SelectItem value="setup">Setup</SelectItem>
+                <SelectItem value="cooking">Cooking</SelectItem>
+                <SelectItem value="results">Results</SelectItem>
+                <SelectItem value="group">Group</SelectItem>
+                <SelectItem value="food">Food</SelectItem>
+                <SelectItem value="venue">Venue</SelectItem>
+                {/* Site Assets */}
+                <SelectItem value="site-hero-video">🎬 Hero Video</SelectItem>
+                <SelectItem value="site-hero-poster">🖼️ Hero Poster</SelectItem>
+                <SelectItem value="site-logo">🏷️ Logo</SelectItem>
+                <SelectItem value="site-og">📱 Social/OG Image</SelectItem>
               </SelectContent>
             </Select>
+          </div>
+
+          <div className="space-y-3 pt-2">
+            <Label>Display Options</Label>
+            <div className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                id="showOnWebsite"
+                checked={formData.showOnWebsite}
+                onChange={(e) => setFormData({ ...formData, showOnWebsite: e.target.checked })}
+                disabled={loading}
+                className="h-4 w-4 rounded border-gray-300"
+              />
+              <Label htmlFor="showOnWebsite" className="font-normal cursor-pointer">
+                Show on website
+              </Label>
+            </div>
+            <div className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                id="featuredOnHomepage"
+                checked={formData.featuredOnHomepage}
+                onChange={(e) => setFormData({ ...formData, featuredOnHomepage: e.target.checked })}
+                disabled={loading}
+                className="h-4 w-4 rounded border-gray-300"
+              />
+              <Label htmlFor="featuredOnHomepage" className="font-normal cursor-pointer">
+                Feature on homepage
+              </Label>
+            </div>
           </div>
 
           <div className="flex gap-2 pt-4">

@@ -171,8 +171,14 @@ export const mediaGallery = pgTable('media_gallery', {
 
   // Organization
   displayOrder: integer('display_order').default(0),
+  // Categories: Content images + Site assets
   category: text('category', {
-    enum: ['workshop', 'setup', 'cooking', 'results', 'group', 'food', 'venue']
+    enum: [
+      // Content images
+      'workshop', 'setup', 'cooking', 'results', 'group', 'food', 'venue',
+      // Site assets (hero, logos, social)
+      'site-hero-video', 'site-hero-poster', 'site-logo', 'site-og'
+    ]
   }).default('workshop'),
 
   // Tagging

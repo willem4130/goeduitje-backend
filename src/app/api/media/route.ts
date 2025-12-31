@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/db'
 import { mediaGallery, type NewMedia } from '@/db/schema'
-import { desc, eq, and, like, or } from 'drizzle-orm'
+import { desc, eq, and, like, or, asc } from 'drizzle-orm'
 
 // GET /api/media - List all media items
 export async function GET(request: NextRequest) {
@@ -10,8 +10,8 @@ export async function GET(request: NextRequest) {
     const workshopId = searchParams.get('workshopId')
     const category = searchParams.get('category')
     const search = searchParams.get('search')
-
-    let query = db.select().from(mediaGallery)
+    const showOnWebsite = searchParams.get('showOnWebsite')
+    const featuredOnHomepage = searchParams.get('featuredOnHomepage')
 
     // Build where conditions
     const conditions = []
@@ -21,23 +21,34 @@ export async function GET(request: NextRequest) {
     }
 
     if (category) {
-      conditions.push(eq(mediaGallery.category, category as any))
+      conditions.push(eq(mediaGallery.category, category as 'workshop' | 'setup' | 'cooking' | 'results' | 'group' | 'food' | 'venue'))
     }
 
-    if (search && mediaGallery.caption && mediaGallery.altText) {
+    if (showOnWebsite === 'true') {
+      conditions.push(eq(mediaGallery.showOnWebsite, true))
+    }
+
+    if (featuredOnHomepage === 'true') {
+      conditions.push(eq(mediaGallery.featuredOnHomepage, true))
+    }
+
+    if (search) {
       conditions.push(
         or(
           like(mediaGallery.caption, `%${search}%`),
-          like(mediaGallery.altText, `%${search}%`)
+          like(mediaGallery.altText, `%${search}%`),
+          like(mediaGallery.fileName, `%${search}%`)
         )
       )
     }
 
+    let query = db.select().from(mediaGallery)
+
     if (conditions.length > 0) {
-      query = query.where(and(...conditions)) as any
+      query = query.where(and(...conditions)) as typeof query
     }
 
-    const items = await query.orderBy(desc(mediaGallery.displayOrder), desc(mediaGallery.createdAt))
+    const items = await query.orderBy(asc(mediaGallery.displayOrder), desc(mediaGallery.createdAt))
 
     return NextResponse.json(items)
   } catch (error) {

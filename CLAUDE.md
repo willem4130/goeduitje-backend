@@ -2,55 +2,47 @@
 
 Admin dashboard for Goeduitje workshop management. Handles workshop requests, AI-powered quote generation, content management, and email automation.
 
-## Architecture
-
-| Repo | Purpose | Port |
-|------|---------|------|
-| **goeduitje-backend** (this) | ALL admin functionality | 3003 |
-| **goeduitje-nl-rebuild** | Public website only | 3000 |
-
-**Database**: Both repos share the SAME Neon PostgreSQL database.
-- Frontend: Prisma ORM (manages migrations)
-- Backend: Drizzle ORM (read/write, NO migrations)
-
 ## Project Structure
 
 ```
 src/
 ├── app/
-│   ├── api/
-│   │   ├── auth/              # NextAuth authentication
-│   │   ├── content/           # FAQ, team, testimonials, recipes CRUD
-│   │   ├── workshops/         # Workshop requests + status automation
-│   │   ├── activities/        # Activity types CRUD
-│   │   ├── locations/         # Locations + drinks pricing CRUD
-│   │   └── pricing/           # Pricing tiers CRUD
-│   ├── content/               # Content management pages
-│   ├── workshops/             # Workshop management pages
-│   └── page.tsx               # Dashboard
+│   ├── api/                      # REST API endpoints
+│   │   ├── auth/[...nextauth]/   # NextAuth authentication
+│   │   ├── content/              # FAQ, team, testimonials, recipes, pages
+│   │   ├── workshops/            # Requests + confirmed + quote preview
+│   │   ├── google-reviews/       # Reviews visibility toggle
+│   │   ├── media/                # Media upload (Vercel Blob)
+│   │   ├── dashboard/stats/      # Dashboard statistics
+│   │   ├── activities/           # Activity types CRUD
+│   │   ├── locations/            # Locations + drinks pricing
+│   │   ├── pricing/              # Pricing tiers CRUD
+│   │   └── settings/             # System settings
+│   ├── content/                  # CMS pages (faq, kpi, pages, recipes, team)
+│   ├── workshops/                # Workshop request management
+│   ├── media/                    # Media gallery admin
+│   ├── google-reviews/           # Reviews admin
+│   ├── feedback/                 # Contact form submissions
+│   ├── settings/                 # System settings UI
+│   └── page.tsx                  # Dashboard
 ├── components/
-│   ├── ui/                    # shadcn/ui components (DO NOT MODIFY)
-│   ├── Navigation.tsx         # Sidebar navigation
-│   └── [feature]Sheet.tsx     # CRUD side panels
+│   ├── ui/                       # shadcn/ui (DO NOT MODIFY)
+│   ├── Navigation.tsx            # Collapsible sidebar
+│   └── *Sheet.tsx                # CRUD side panels
 ├── db/
-│   ├── schema.ts              # Drizzle ORM schemas
-│   └── index.ts               # Database connection
+│   ├── schema.ts                 # Drizzle ORM schemas
+│   └── index.ts                  # Database connection
 ├── lib/
-│   ├── ai.ts                  # Claude API integration
-│   ├── email.ts               # Resend email sending
-│   ├── pdf.ts                 # Puppeteer PDF generation
-│   └── prompt-builder.ts      # Dynamic AI prompts from DB
-└── prompts/                   # AI prompt templates
+│   ├── ai.ts                     # Claude API integration
+│   ├── email.ts                  # Resend email
+│   ├── pdf.ts                    # Puppeteer PDF generation
+│   └── prompt-builder.ts         # Dynamic AI prompts
+└── prompts/                      # AI prompt templates
 ```
 
 ## Tech Stack
 
-- **Framework**: Next.js 15 + React 19 + TypeScript 5
-- **Database**: PostgreSQL (Neon) + Drizzle ORM
-- **AI**: Anthropic Claude (quote emails)
-- **Email**: Resend
-- **PDF**: Puppeteer + @sparticuz/chromium
-- **UI**: Tailwind CSS 3 + shadcn/ui + Radix UI
+Next.js 15 + React 19 + TypeScript | Drizzle ORM + PostgreSQL (Neon) | Claude AI | Resend | Puppeteer PDF | shadcn/ui + Tailwind CSS 3
 
 ## Code Quality - Zero Tolerance
 
@@ -62,8 +54,8 @@ Fix ALL errors before continuing. No exceptions.
 
 ## Key Automations
 
-**Status → 'offerte gemaakt'**: Triggers AI email + PDF quote generation
-**Status → 'bevestigde opdracht'**: Auto-creates confirmedWorkshop record
+- **Status → 'offerte gemaakt'**: Triggers AI email + PDF quote generation
+- **Status → 'bevestigde opdracht'**: Auto-creates confirmedWorkshop record
 
 ## Organization Rules
 
@@ -73,10 +65,14 @@ Fix ALL errors before continuing. No exceptions.
 - Database schemas → `/src/db/schema.ts` (Drizzle)
 - Max 300 lines per file
 
-## Database Commands
+## Database
+
+**Shared with Frontend**: Both repos connect to same Neon PostgreSQL.
+- Frontend Prisma: manages migrations (SOURCE OF TRUTH)
+- Backend Drizzle: read/write only (NEVER run migrations)
 
 ```bash
-npm run db:push      # Push schema changes
+npm run db:push      # Push schema changes (sync only)
 npm run db:studio    # View database
 ```
 
