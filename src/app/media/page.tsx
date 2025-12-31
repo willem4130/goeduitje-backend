@@ -12,27 +12,55 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { Image as ImageIcon, Video, Music, Upload, Pencil, Trash2, GripVertical, Grid3x3, ChevronDown, ChevronRight, Globe, Layout, Palette, Share2 } from 'lucide-react'
-import Link from 'next/link'
+import {
+  Image as ImageIcon,
+  Video,
+  Upload,
+  Pencil,
+  Trash2,
+  ChevronDown,
+  ChevronRight,
+  Globe,
+  Utensils,
+  FileText,
+  Sparkles,
+  Play,
+  Share2,
+  LayoutTemplate,
+  Images,
+  Users,
+  Quote,
+  ChefHat,
+  Folder,
+  Search,
+  Filter,
+  Plus,
+} from 'lucide-react'
 import { UploadMediaSheet } from '@/components/UploadMediaSheet'
 import { EditMediaSheet } from '@/components/EditMediaSheet'
 import {
-  DndContext,
-  closestCenter,
-  KeyboardSensor,
-  PointerSensor,
-  useSensor,
-  useSensors,
-  DragEndEvent,
-} from '@dnd-kit/core'
-import {
-  arrayMove,
-  SortableContext,
-  sortableKeyboardCoordinates,
-  useSortable,
-  verticalListSortingStrategy,
-} from '@dnd-kit/sortable'
-import { CSS } from '@dnd-kit/utilities'
+  MEDIA_CATEGORIES,
+  CATEGORY_GROUPS,
+  getCategoryById,
+  type MediaCategoryId,
+} from '@/lib/media-categories'
+
+// Icon mapping
+const ICONS: Record<string, React.ElementType> = {
+  Globe,
+  Utensils,
+  FileText,
+  Sparkles,
+  Play,
+  Image: ImageIcon,
+  Share2,
+  LayoutTemplate,
+  Images,
+  Users,
+  Quote,
+  ChefHat,
+  Folder,
+}
 
 type MediaItem = {
   id: number
@@ -58,261 +86,140 @@ type MediaItem = {
   updatedAt: Date
 }
 
-function SortableMediaCard({ item, onEdit, onDelete }: {
+function MediaCard({
+  item,
+  onEdit,
+  onDelete,
+}: {
   item: MediaItem
   onEdit: (id: number) => void
   onDelete: (id: number) => void
 }) {
-  const {
-    attributes,
-    listeners,
-    setNodeRef,
-    transform,
-    transition,
-    isDragging,
-  } = useSortable({ id: item.id })
-
-  const style = {
-    transform: CSS.Transform.toString(transform),
-    transition,
-    opacity: isDragging ? 0.5 : 1,
-  }
-
-  const getTypeIcon = (mimeType: string) => {
-    if (mimeType.startsWith('image/')) return <ImageIcon className="w-4 h-4" />
-    if (mimeType.startsWith('video/')) return <Video className="w-4 h-4" />
-    if (mimeType.startsWith('audio/')) return <Music className="w-4 h-4" />
-    return <ImageIcon className="w-4 h-4" />
-  }
-
-  const getMediaType = (mimeType: string) => {
-    if (mimeType.startsWith('image/')) return 'image'
-    if (mimeType.startsWith('video/')) return 'video'
-    if (mimeType.startsWith('audio/')) return 'audio'
-    return 'file'
-  }
+  const isImage = item.mimeType.startsWith('image/')
+  const isVideo = item.mimeType.startsWith('video/')
 
   const formatFileSize = (bytes: number | null) => {
-    if (!bytes) return 'Unknown size'
-    const kb = bytes / 1024
+    if (!bytes) return ''
     const mb = bytes / (1024 * 1024)
-
-    if (mb >= 1) {
-      return mb.toFixed(2) + ' MB'
-    } else {
-      return kb.toFixed(0) + ' KB'
-    }
+    return mb >= 1 ? `${mb.toFixed(1)} MB` : `${(bytes / 1024).toFixed(0)} KB`
   }
-
-  const getAspectRatio = (width: number | null, height: number | null) => {
-    if (!width || !height) return null
-
-    const gcd = (a: number, b: number): number => b === 0 ? a : gcd(b, a % b)
-    const divisor = gcd(width, height)
-    const ratioW = width / divisor
-    const ratioH = height / divisor
-
-    // Common aspect ratios
-    if (ratioW === 16 && ratioH === 9) return '16:9'
-    if (ratioW === 4 && ratioH === 3) return '4:3'
-    if (ratioW === 3 && ratioH === 2) return '3:2'
-    if (ratioW === 1 && ratioH === 1) return '1:1 (Square)'
-    if (ratioW === 9 && ratioH === 16) return '9:16 (Portrait)'
-    if (ratioW === 3 && ratioH === 4) return '3:4 (Portrait)'
-
-    return `${ratioW}:${ratioH}`
-  }
-
-  const getFileFormat = (mimeType: string | null) => {
-    if (!mimeType) return 'Unknown'
-
-    const formats: Record<string, string> = {
-      'image/webp': 'WebP',
-      'image/jpeg': 'JPEG',
-      'image/jpg': 'JPG',
-      'image/png': 'PNG',
-      'image/gif': 'GIF',
-      'video/mp4': 'MP4',
-      'video/webm': 'WebM',
-      'audio/mpeg': 'MP3',
-      'audio/wav': 'WAV',
-    }
-
-    return formats[mimeType] || mimeType.split('/')[1]?.toUpperCase() || 'Unknown'
-  }
-
-  // Calculate aspect ratio for proper display
-  const getAspectRatioStyle = () => {
-    if (!item.width || !item.height) return { aspectRatio: '16 / 9' }
-    return { aspectRatio: `${item.width} / ${item.height}` }
-  }
-
-  const mediaType = getMediaType(item.mimeType)
 
   return (
-    <Card ref={setNodeRef} style={style} className="overflow-hidden group relative">
-      <div className="absolute top-2 left-2 z-10 cursor-grab active:cursor-grabbing" {...attributes} {...listeners}>
-        <div className="bg-background/80 backdrop-blur-sm p-1 rounded">
-          <GripVertical className="w-4 h-4 text-muted-foreground" />
+    <div
+      className="group relative aspect-square rounded-lg overflow-hidden bg-muted cursor-pointer border hover:border-primary/50 transition-all"
+      onClick={() => onEdit(item.id)}
+    >
+      {isImage ? (
+        <img
+          src={item.blobUrl}
+          alt={item.altText || item.fileName}
+          className="w-full h-full object-cover"
+        />
+      ) : isVideo ? (
+        <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-muted to-muted/50">
+          <Play className="w-12 h-12 text-muted-foreground" />
         </div>
-      </div>
-      {/* Website visibility badges */}
-      <div className="absolute top-2 right-2 z-10 flex gap-1">
-        {item.showOnWebsite && (
-          <Badge variant="default" className="text-[10px] px-1.5 py-0.5 bg-green-600">Web</Badge>
-        )}
-        {item.featuredOnHomepage && (
-          <Badge variant="default" className="text-[10px] px-1.5 py-0.5 bg-yellow-600">Home</Badge>
-        )}
-      </div>
-      <div
-        className="relative bg-muted flex items-center justify-center"
-        style={mediaType === 'image' && item.width && item.height ? getAspectRatioStyle() : { aspectRatio: '16 / 9' }}
-      >
-        {mediaType === 'image' ? (
-          <img
-            src={item.blobUrl}
-            alt={item.altText || item.caption || item.fileName}
-            className="w-full h-full object-cover"
-          />
-        ) : (
-          <div className="flex flex-col items-center gap-2">
-            {getTypeIcon(item.mimeType)}
-            <p className="text-sm text-muted-foreground capitalize">{mediaType}</p>
-          </div>
-        )}
-        <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
-          <Button size="sm" variant="secondary" onClick={() => onEdit(item.id)}>
-            <Pencil className="w-4 h-4 mr-1" />
-            Edit
+      ) : (
+        <div className="w-full h-full flex items-center justify-center">
+          <FileText className="w-12 h-12 text-muted-foreground" />
+        </div>
+      )}
+
+      {/* Hover overlay */}
+      <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-between p-3">
+        <div className="flex justify-end gap-1">
+          <Button
+            size="icon"
+            variant="secondary"
+            className="h-8 w-8"
+            onClick={(e) => {
+              e.stopPropagation()
+              onEdit(item.id)
+            }}
+          >
+            <Pencil className="w-4 h-4" />
           </Button>
           <Button
-            size="sm"
+            size="icon"
             variant="destructive"
-            onClick={() => onDelete(item.id)}
+            className="h-8 w-8"
+            onClick={(e) => {
+              e.stopPropagation()
+              onDelete(item.id)
+            }}
           >
-            <Trash2 className="w-4 h-4 mr-1" />
-            Delete
+            <Trash2 className="w-4 h-4" />
           </Button>
         </div>
+        <div className="text-white">
+          <p className="text-sm font-medium truncate">{item.caption || item.fileName}</p>
+          <p className="text-xs text-white/70">{formatFileSize(item.fileSize)}</p>
+        </div>
       </div>
-      <div className="p-4">
-        <h3 className="font-semibold truncate" title={item.fileName}>
-          {item.caption || item.fileName}
-        </h3>
-        {item.altText && (
-          <p className="text-sm text-muted-foreground truncate mt-1">
-            {item.altText}
-          </p>
+
+      {/* Status badges */}
+      <div className="absolute top-2 left-2 flex gap-1">
+        {item.showOnWebsite && (
+          <Badge className="text-[10px] px-1.5 py-0.5 bg-green-600 hover:bg-green-600">
+            Live
+          </Badge>
         )}
-        <div className="flex flex-wrap gap-2 mt-3">
-          {item.category && (
+        {item.featuredOnHomepage && (
+          <Badge className="text-[10px] px-1.5 py-0.5 bg-amber-500 hover:bg-amber-500">
+            Featured
+          </Badge>
+        )}
+      </div>
+
+      {/* Tags */}
+      {item.tags && item.tags.length > 0 && (
+        <div className="absolute bottom-2 left-2 right-2 flex gap-1 flex-wrap">
+          {item.tags.slice(0, 2).map((tag) => (
             <Badge
-              variant={item.category.startsWith('site-') ? 'default' : 'outline'}
-              className={`text-xs ${item.category.startsWith('site-') ? 'bg-purple-600' : 'capitalize'}`}
+              key={tag}
+              variant="secondary"
+              className="text-[9px] px-1.5 py-0 bg-black/50 text-white border-0"
             >
-              {item.category.startsWith('site-')
-                ? item.category.replace('site-', '').replace('-', ' ')
-                : item.category}
+              {tag}
+            </Badge>
+          ))}
+          {item.tags.length > 2 && (
+            <Badge
+              variant="secondary"
+              className="text-[9px] px-1.5 py-0 bg-black/50 text-white border-0"
+            >
+              +{item.tags.length - 2}
             </Badge>
           )}
         </div>
-
-        <div className="mt-3 space-y-1 text-xs text-muted-foreground">
-          <div className="flex items-center justify-between">
-            <span className="font-medium">Format:</span>
-            <span>{getFileFormat(item.mimeType)}</span>
-          </div>
-          <div className="flex items-center justify-between">
-            <span className="font-medium">Size:</span>
-            <span>{formatFileSize(item.fileSize)}</span>
-          </div>
-          {item.width && item.height && (
-            <>
-              <div className="flex items-center justify-between">
-                <span className="font-medium">Dimensions:</span>
-                <span>{item.width} × {item.height}</span>
-              </div>
-              {getAspectRatio(item.width, item.height) && (
-                <div className="flex items-center justify-between">
-                  <span className="font-medium">Aspect Ratio:</span>
-                  <span>{getAspectRatio(item.width, item.height)}</span>
-                </div>
-              )}
-            </>
-          )}
-        </div>
-      </div>
-    </Card>
+      )}
+    </div>
   )
 }
-
-// Section definitions for grouped view
-const MEDIA_SECTIONS = [
-  {
-    id: 'site-assets',
-    title: 'Site Assets',
-    description: 'Core website branding and layout elements',
-    icon: Globe,
-    categories: ['site-logo', 'site-hero-video', 'site-hero-poster', 'site-og'],
-    subsections: [
-      { category: 'site-logo', title: 'Logos', description: 'Navigation and footer logos' },
-      { category: 'site-hero-video', title: 'Hero Videos', description: 'Homepage background videos' },
-      { category: 'site-hero-poster', title: 'Hero Posters', description: 'Video fallback images' },
-      { category: 'site-og', title: 'Social/OG Images', description: 'Open Graph & Twitter cards' },
-    ]
-  },
-  {
-    id: 'content',
-    title: 'Content Images',
-    description: 'Workshop and event photography',
-    icon: Palette,
-    categories: ['workshop', 'setup', 'cooking', 'results', 'group', 'food', 'venue'],
-    subsections: [
-      { category: 'workshop', title: 'Workshop', description: 'General workshop photos' },
-      { category: 'setup', title: 'Setup', description: 'Event setup and preparation' },
-      { category: 'cooking', title: 'Cooking', description: 'Cooking in action' },
-      { category: 'results', title: 'Results', description: 'Finished dishes and creations' },
-      { category: 'group', title: 'Group', description: 'Team and group photos' },
-      { category: 'food', title: 'Food', description: 'Food close-ups and plating' },
-      { category: 'venue', title: 'Venue', description: 'Location and venue shots' },
-    ]
-  },
-]
 
 export default function MediaGallery() {
   const [media, setMedia] = useState<MediaItem[]>([])
   const [loading, setLoading] = useState(true)
-  const [typeFilter, setTypeFilter] = useState<'all' | 'image' | 'video' | 'audio'>('all')
   const [categoryFilter, setCategoryFilter] = useState<string>('all')
-  const [websiteFilter, setWebsiteFilter] = useState<'all' | 'website' | 'homepage'>('all')
   const [searchQuery, setSearchQuery] = useState('')
   const [uploadSheetOpen, setUploadSheetOpen] = useState(false)
+  const [uploadDefaultCategory, setUploadDefaultCategory] = useState<MediaCategoryId>('general')
   const [editSheetOpen, setEditSheetOpen] = useState(false)
   const [editingMediaId, setEditingMediaId] = useState<number | null>(null)
-  const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({
+  const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>({
     'site-assets': true,
-    'content': true,
+    'workshop-content': true,
+    'page-content': true,
   })
-
-  const sensors = useSensors(
-    useSensor(PointerSensor),
-    useSensor(KeyboardSensor, {
-      coordinateGetter: sortableKeyboardCoordinates,
-    })
-  )
 
   const fetchMedia = () => {
     const params = new URLSearchParams()
-    if (typeFilter !== 'all') params.append('type', typeFilter)
     if (categoryFilter !== 'all') params.append('category', categoryFilter)
-    if (websiteFilter === 'website') params.append('showOnWebsite', 'true')
-    if (websiteFilter === 'homepage') params.append('featuredOnHomepage', 'true')
     if (searchQuery) params.append('search', searchQuery)
 
     fetch(`/api/media?${params}`)
-      .then(res => res.json())
-      .then(data => {
+      .then((res) => res.json())
+      .then((data) => {
         setMedia(data)
         setLoading(false)
       })
@@ -320,50 +227,10 @@ export default function MediaGallery() {
 
   useEffect(() => {
     fetchMedia()
-  }, [typeFilter, categoryFilter, websiteFilter])
+  }, [categoryFilter])
 
   const handleSearch = () => {
     fetchMedia()
-  }
-
-  const handleDragEnd = async (event: DragEndEvent) => {
-    const { active, over } = event
-
-    if (!over || active.id === over.id) {
-      return
-    }
-
-    const oldIndex = media.findIndex((item) => item.id === active.id)
-    const newIndex = media.findIndex((item) => item.id === over.id)
-
-    const newMedia = arrayMove(media, oldIndex, newIndex)
-
-    // Update local state immediately for smooth UX
-    setMedia(newMedia)
-
-    // Update display order in database
-    const updates = newMedia.map((item, index) => ({
-      id: item.id,
-      displayOrder: index,
-    }))
-
-    try {
-      const response = await fetch('/api/media/reorder', {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ items: updates }),
-      })
-
-      if (!response.ok) {
-        // Revert on error
-        fetchMedia()
-        alert('Failed to save new order')
-      }
-    } catch (error) {
-      // Revert on error
-      fetchMedia()
-      alert('Failed to save new order')
-    }
   }
 
   const handleEditMedia = (id: number) => {
@@ -375,30 +242,38 @@ export default function MediaGallery() {
     fetchMedia()
   }
 
-  const toggleSection = (sectionId: string) => {
-    setExpandedSections(prev => ({
+  const handleUploadForCategory = (categoryId: MediaCategoryId) => {
+    setUploadDefaultCategory(categoryId)
+    setUploadSheetOpen(true)
+  }
+
+  const toggleGroup = (groupId: string) => {
+    setExpandedGroups((prev) => ({
       ...prev,
-      [sectionId]: !prev[sectionId]
+      [groupId]: !prev[groupId],
     }))
   }
 
-  // Group media by category for sectioned view
-  const groupedMedia = media.reduce((acc, item) => {
-    const category = item.category || 'uncategorized'
-    if (!acc[category]) acc[category] = []
-    acc[category].push(item)
-    return acc
-  }, {} as Record<string, MediaItem[]>)
-
-  // Check if we should show grouped view (no specific filters applied)
-  const showGroupedView = categoryFilter === 'all' && typeFilter === 'all' && websiteFilter === 'all' && !searchQuery
-
   const deleteMediaItem = async (id: number) => {
-    if (!confirm('Delete this media item?')) return
+    if (!confirm('Delete this media item? This cannot be undone.')) return
 
     await fetch(`/api/media/${id}`, { method: 'DELETE' })
-    setMedia(media.filter(m => m.id !== id))
+    setMedia(media.filter((m) => m.id !== id))
   }
+
+  // Group media by category
+  const groupedMedia = media.reduce(
+    (acc, item) => {
+      const category = item.category || 'general'
+      if (!acc[category]) acc[category] = []
+      acc[category].push(item)
+      return acc
+    },
+    {} as Record<string, MediaItem[]>
+  )
+
+  // Show grouped view when no filter is applied
+  const showGroupedView = categoryFilter === 'all' && !searchQuery
 
   if (loading) {
     return (
@@ -409,244 +284,208 @@ export default function MediaGallery() {
   }
 
   return (
-    <div className="container mx-auto py-10 px-4">
-      <div className="flex justify-between items-center mb-8">
-        <h1 className="text-4xl font-bold">Media Gallery</h1>
-        <div className="flex gap-3">
-          <Link href="/media/grid">
-            <Button size="lg" variant="outline">
-              <Grid3x3 className="mr-2 h-5 w-5" />
-              Grid Builder
-            </Button>
-          </Link>
-          <Button size="lg" onClick={() => setUploadSheetOpen(true)}>
-            <Upload className="mr-2 h-5 w-5" />
-            Upload Media
-          </Button>
+    <div className="container mx-auto py-8 px-4 max-w-7xl">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
+        <div>
+          <h1 className="text-3xl font-bold">Media Gallery</h1>
+          <p className="text-muted-foreground mt-1">
+            Manage images and videos for your website
+          </p>
         </div>
+        <Button size="lg" onClick={() => handleUploadForCategory('general')}>
+          <Upload className="mr-2 h-5 w-5" />
+          Upload Media
+        </Button>
       </div>
 
-      <Card className="p-6 mb-6">
-        <div className="mb-6">
-          <label className="text-sm font-medium mb-2 block">Search Media</label>
-          <div className="flex gap-2">
+      {/* Filters */}
+      <Card className="p-4 mb-6">
+        <div className="flex flex-col sm:flex-row gap-4">
+          <div className="flex-1 relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
             <Input
               type="text"
-              placeholder="Search by title or description..."
+              placeholder="Search by caption, filename, or alt text..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
-              className="max-w-md"
+              className="pl-10"
             />
-            <Button onClick={handleSearch}>Search</Button>
           </div>
-          {searchQuery && (
-            <p className="text-sm text-muted-foreground mt-2">
+          <div className="flex gap-2">
+            <Select value={categoryFilter} onValueChange={setCategoryFilter}>
+              <SelectTrigger className="w-[200px]">
+                <Filter className="w-4 h-4 mr-2" />
+                <SelectValue placeholder="Filter by category" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Categories</SelectItem>
+                {CATEGORY_GROUPS.map((group) => (
+                  <div key={group.id}>
+                    <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground">
+                      {group.label}
+                    </div>
+                    {MEDIA_CATEGORIES.filter((c) => c.group === group.id).map((category) => (
+                      <SelectItem key={category.id} value={category.id}>
+                        {category.label}
+                      </SelectItem>
+                    ))}
+                  </div>
+                ))}
+              </SelectContent>
+            </Select>
+            <Button variant="outline" onClick={handleSearch}>
+              Search
+            </Button>
+          </div>
+        </div>
+        {(searchQuery || categoryFilter !== 'all') && (
+          <div className="mt-3 flex items-center gap-2">
+            <p className="text-sm text-muted-foreground">
               Found {media.length} item{media.length !== 1 ? 's' : ''}
             </p>
-          )}
-        </div>
-
-        <div className="flex flex-wrap gap-6 items-center">
-          <div className="flex items-center gap-2">
-            <label className="text-sm font-medium">Show on:</label>
-            <div className="flex gap-2">
+            {(searchQuery || categoryFilter !== 'all') && (
               <Button
-                variant={websiteFilter === 'all' ? 'default' : 'outline'}
+                variant="ghost"
                 size="sm"
-                onClick={() => setWebsiteFilter('all')}
+                onClick={() => {
+                  setSearchQuery('')
+                  setCategoryFilter('all')
+                }}
               >
-                All
+                Clear filters
               </Button>
-              <Button
-                variant={websiteFilter === 'website' ? 'default' : 'outline'}
-                size="sm"
-                onClick={() => setWebsiteFilter('website')}
-              >
-                Website
-              </Button>
-              <Button
-                variant={websiteFilter === 'homepage' ? 'default' : 'outline'}
-                size="sm"
-                onClick={() => setWebsiteFilter('homepage')}
-              >
-                Homepage
-              </Button>
-            </div>
+            )}
           </div>
-
-          <div className="flex items-center gap-2">
-            <label className="text-sm font-medium">Type:</label>
-            <Select value={typeFilter} onValueChange={(value: 'all' | 'image' | 'video' | 'audio') => setTypeFilter(value)}>
-              <SelectTrigger className="w-[120px]">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All</SelectItem>
-                <SelectItem value="image">Images</SelectItem>
-                <SelectItem value="video">Videos</SelectItem>
-                <SelectItem value="audio">Audio</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div className="flex items-center gap-2">
-            <label className="text-sm font-medium">Category:</label>
-            <Select value={categoryFilter} onValueChange={setCategoryFilter}>
-              <SelectTrigger className="w-[160px]">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All</SelectItem>
-                {/* Content Images */}
-                <SelectItem value="workshop">Workshop</SelectItem>
-                <SelectItem value="setup">Setup</SelectItem>
-                <SelectItem value="cooking">Cooking</SelectItem>
-                <SelectItem value="results">Results</SelectItem>
-                <SelectItem value="group">Group</SelectItem>
-                <SelectItem value="food">Food</SelectItem>
-                <SelectItem value="venue">Venue</SelectItem>
-                {/* Site Assets */}
-                <SelectItem value="site-hero-video">🎬 Hero Video</SelectItem>
-                <SelectItem value="site-hero-poster">🖼️ Hero Poster</SelectItem>
-                <SelectItem value="site-logo">🏷️ Logo</SelectItem>
-                <SelectItem value="site-og">📱 Social/OG</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-        </div>
+        )}
       </Card>
 
+      {/* Content */}
       {media.length === 0 ? (
         <Card className="p-12 text-center">
           <Upload className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
-          <h2 className="text-2xl font-semibold mb-2">No media items yet</h2>
-          <p className="text-muted-foreground mb-4">
-            Upload your first image, video, or audio file
+          <h2 className="text-2xl font-semibold mb-2">
+            {searchQuery || categoryFilter !== 'all' ? 'No results found' : 'No media yet'}
+          </h2>
+          <p className="text-muted-foreground mb-6">
+            {searchQuery || categoryFilter !== 'all'
+              ? 'Try adjusting your search or filters'
+              : 'Upload your first image or video to get started'}
           </p>
-          <Button size="lg" onClick={() => setUploadSheetOpen(true)}>
-            <Upload className="mr-2 h-5 w-5" />
-            Upload Media
-          </Button>
+          {!searchQuery && categoryFilter === 'all' && (
+            <Button size="lg" onClick={() => handleUploadForCategory('general')}>
+              <Upload className="mr-2 h-5 w-5" />
+              Upload Media
+            </Button>
+          )}
         </Card>
       ) : showGroupedView ? (
-        /* Grouped Sections View */
-        <div className="space-y-8">
-          {MEDIA_SECTIONS.map((section) => {
-            const SectionIcon = section.icon
-            const sectionItems = section.categories.flatMap(cat => groupedMedia[cat] || [])
-            const isExpanded = expandedSections[section.id]
+        /* Grouped View */
+        <div className="space-y-6">
+          {CATEGORY_GROUPS.map((group) => {
+            const GroupIcon = ICONS[group.icon] || Folder
+            const isExpanded = expandedGroups[group.id]
+            const categoriesInGroup = MEDIA_CATEGORIES.filter((c) => c.group === group.id)
+            const totalItems = categoriesInGroup.reduce(
+              (sum, cat) => sum + (groupedMedia[cat.id]?.length || 0),
+              0
+            )
 
             return (
-              <Card key={section.id} className="overflow-hidden">
+              <Card key={group.id} className="overflow-hidden">
                 <button
-                  onClick={() => toggleSection(section.id)}
-                  className="w-full p-6 flex items-center justify-between hover:bg-muted/50 transition-colors"
+                  onClick={() => toggleGroup(group.id)}
+                  className="w-full p-4 flex items-center justify-between hover:bg-muted/50 transition-colors"
                 >
-                  <div className="flex items-center gap-4">
-                    <div className="p-3 rounded-lg bg-primary/10">
-                      <SectionIcon className="w-6 h-6 text-primary" />
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 rounded-lg bg-primary/10">
+                      <GroupIcon className="w-5 h-5 text-primary" />
                     </div>
                     <div className="text-left">
-                      <h2 className="text-xl font-bold">{section.title}</h2>
-                      <p className="text-sm text-muted-foreground">{section.description}</p>
+                      <h2 className="text-lg font-semibold">{group.label}</h2>
+                      <p className="text-sm text-muted-foreground">{group.description}</p>
                     </div>
-                    <Badge variant="secondary" className="ml-4">
-                      {sectionItems.length} item{sectionItems.length !== 1 ? 's' : ''}
-                    </Badge>
                   </div>
-                  {isExpanded ? (
-                    <ChevronDown className="w-5 h-5 text-muted-foreground" />
-                  ) : (
-                    <ChevronRight className="w-5 h-5 text-muted-foreground" />
-                  )}
+                  <div className="flex items-center gap-3">
+                    <Badge variant="secondary">{totalItems} items</Badge>
+                    {isExpanded ? (
+                      <ChevronDown className="w-5 h-5 text-muted-foreground" />
+                    ) : (
+                      <ChevronRight className="w-5 h-5 text-muted-foreground" />
+                    )}
+                  </div>
                 </button>
 
                 {isExpanded && (
-                  <div className="border-t">
-                    {section.subsections.map((subsection) => {
-                      const items = groupedMedia[subsection.category] || []
-                      if (items.length === 0) {
-                        return (
-                          <div key={subsection.category} className="px-6 py-4 border-b last:border-b-0">
-                            <div className="flex items-center justify-between">
-                              <div>
-                                <h3 className="font-semibold">{subsection.title}</h3>
-                                <p className="text-xs text-muted-foreground">{subsection.description}</p>
-                              </div>
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => {
-                                  setCategoryFilter(subsection.category)
-                                  setUploadSheetOpen(true)
-                                }}
-                              >
-                                <Upload className="w-4 h-4 mr-1" />
-                                Add
-                              </Button>
-                            </div>
-                          </div>
-                        )
-                      }
+                  <div className="border-t divide-y">
+                    {categoriesInGroup.map((category) => {
+                      const CategoryIcon = ICONS[category.icon] || Folder
+                      const items = groupedMedia[category.id] || []
 
                       return (
-                        <div key={subsection.category} className="px-6 py-4 border-b last:border-b-0">
+                        <div key={category.id} className="p-4">
                           <div className="flex items-center justify-between mb-3">
-                            <div>
-                              <h3 className="font-semibold">{subsection.title}</h3>
-                              <p className="text-xs text-muted-foreground">{subsection.description}</p>
+                            <div className="flex items-center gap-2">
+                              <CategoryIcon className="w-4 h-4 text-muted-foreground" />
+                              <div>
+                                <h3 className="font-medium">{category.label}</h3>
+                                <p className="text-xs text-muted-foreground">
+                                  {category.placement}
+                                </p>
+                              </div>
                             </div>
                             <div className="flex items-center gap-2">
                               <Badge variant="outline">{items.length}</Badge>
                               <Button
-                                variant="ghost"
+                                variant="outline"
                                 size="sm"
-                                onClick={() => setCategoryFilter(subsection.category)}
+                                onClick={() => handleUploadForCategory(category.id)}
                               >
-                                View All
+                                <Plus className="w-4 h-4 mr-1" />
+                                Add
                               </Button>
                             </div>
                           </div>
-                          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3">
-                            {items.slice(0, 6).map((item) => (
-                              <div
-                                key={item.id}
-                                className="relative aspect-square rounded-lg overflow-hidden bg-muted group cursor-pointer"
-                                onClick={() => handleEditMedia(item.id)}
+
+                          {items.length === 0 ? (
+                            <div className="py-8 text-center border-2 border-dashed rounded-lg">
+                              <CategoryIcon className="w-8 h-8 text-muted-foreground mx-auto mb-2" />
+                              <p className="text-sm text-muted-foreground mb-3">
+                                No {category.label.toLowerCase()} uploaded yet
+                              </p>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => handleUploadForCategory(category.id)}
                               >
-                                {item.mimeType.startsWith('image/') ? (
-                                  <img
-                                    src={item.blobUrl}
-                                    alt={item.altText || item.fileName}
-                                    className="w-full h-full object-cover"
-                                  />
-                                ) : (
-                                  <div className="w-full h-full flex items-center justify-center">
-                                    <Video className="w-8 h-8 text-muted-foreground" />
-                                  </div>
-                                )}
-                                <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                                  <Pencil className="w-5 h-5 text-white" />
+                                <Upload className="w-4 h-4 mr-1" />
+                                Upload {category.label}
+                              </Button>
+                            </div>
+                          ) : (
+                            <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 gap-3">
+                              {items.slice(0, 12).map((item) => (
+                                <MediaCard
+                                  key={item.id}
+                                  item={item}
+                                  onEdit={handleEditMedia}
+                                  onDelete={deleteMediaItem}
+                                />
+                              ))}
+                              {items.length > 12 && (
+                                <div
+                                  className="aspect-square rounded-lg bg-muted flex flex-col items-center justify-center cursor-pointer hover:bg-muted/80 transition-colors border"
+                                  onClick={() => setCategoryFilter(category.id)}
+                                >
+                                  <span className="text-2xl font-bold text-muted-foreground">
+                                    +{items.length - 12}
+                                  </span>
+                                  <span className="text-xs text-muted-foreground">View all</span>
                                 </div>
-                                {(item.tags as string[])?.length > 0 && (
-                                  <div className="absolute bottom-1 left-1 right-1">
-                                    <Badge variant="secondary" className="text-[9px] truncate max-w-full">
-                                      {(item.tags as string[])[0]}
-                                    </Badge>
-                                  </div>
-                                )}
-                              </div>
-                            ))}
-                            {items.length > 6 && (
-                              <div
-                                className="aspect-square rounded-lg bg-muted flex items-center justify-center cursor-pointer hover:bg-muted/80 transition-colors"
-                                onClick={() => setCategoryFilter(subsection.category)}
-                              >
-                                <span className="text-sm text-muted-foreground">+{items.length - 6} more</span>
-                              </div>
-                            )}
-                          </div>
+                              )}
+                            </div>
+                          )}
                         </div>
                       )
                     })}
@@ -657,34 +496,25 @@ export default function MediaGallery() {
           })}
         </div>
       ) : (
-        /* Flat Grid View (when filters applied) */
-        <DndContext
-          sensors={sensors}
-          collisionDetection={closestCenter}
-          onDragEnd={handleDragEnd}
-        >
-          <SortableContext
-            items={media.map(m => m.id)}
-            strategy={verticalListSortingStrategy}
-          >
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-              {media.map((item) => (
-                <SortableMediaCard
-                  key={item.id}
-                  item={item}
-                  onEdit={handleEditMedia}
-                  onDelete={deleteMediaItem}
-                />
-              ))}
-            </div>
-          </SortableContext>
-        </DndContext>
+        /* Grid View (filtered) */
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
+          {media.map((item) => (
+            <MediaCard
+              key={item.id}
+              item={item}
+              onEdit={handleEditMedia}
+              onDelete={deleteMediaItem}
+            />
+          ))}
+        </div>
       )}
 
+      {/* Sheets */}
       <UploadMediaSheet
         open={uploadSheetOpen}
         onOpenChange={setUploadSheetOpen}
         onSuccess={handleSheetSuccess}
+        defaultCategory={uploadDefaultCategory}
       />
 
       <EditMediaSheet

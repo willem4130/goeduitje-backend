@@ -39,10 +39,22 @@ export async function POST(request: NextRequest) {
     // Parse form data
     const caption = formData.get('caption') as string || null
     const altText = formData.get('altText') as string || null
-    const category = formData.get('category') as string || 'workshop'
+    const category = formData.get('category') as string || 'general'
     const showOnWebsite = formData.get('showOnWebsite') === 'true'
     const featuredOnHomepage = formData.get('featuredOnHomepage') === 'true'
     const workshopId = formData.get('workshopId') ? parseInt(formData.get('workshopId') as string) : null
+
+    // Parse tags from JSON string
+    let tags: string[] | null = null
+    const tagsString = formData.get('tags') as string
+    if (tagsString) {
+      try {
+        tags = JSON.parse(tagsString)
+      } catch {
+        // If parsing fails, try comma-separated
+        tags = tagsString.split(',').map(t => t.trim()).filter(Boolean)
+      }
+    }
 
     // Create database record
     const newMedia: NewMedia = {
@@ -55,11 +67,12 @@ export async function POST(request: NextRequest) {
       height,
       caption,
       altText,
-      category: category as 'workshop' | 'setup' | 'cooking' | 'results' | 'group' | 'food' | 'venue',
+      category: category as 'site-logo' | 'site-hero-video' | 'site-hero-poster' | 'site-og' | 'workshop-hero' | 'workshop-gallery' | 'team-photo' | 'testimonial' | 'recipe' | 'general',
+      tags,
       isPublic: false,
       showOnWebsite,
       featuredOnHomepage,
-      uploadedBy: 'admin', // Could be extracted from session if auth is implemented
+      uploadedBy: 'admin',
     }
 
     const [media] = await db.insert(mediaGallery).values(newMedia).returning()

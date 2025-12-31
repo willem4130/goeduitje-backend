@@ -171,15 +171,17 @@ export const mediaGallery = pgTable('media_gallery', {
 
   // Organization
   displayOrder: integer('display_order').default(0),
-  // Categories: Content images + Site assets
+  // Categories: Site assets + Content
   category: text('category', {
     enum: [
-      // Content images
-      'workshop', 'setup', 'cooking', 'results', 'group', 'food', 'venue',
-      // Site assets (hero, logos, social)
-      'site-hero-video', 'site-hero-poster', 'site-logo', 'site-og'
+      // Site assets
+      'site-logo', 'site-hero-video', 'site-hero-poster', 'site-og',
+      // Workshop content
+      'workshop-hero', 'workshop-gallery',
+      // Page content
+      'team-photo', 'testimonial', 'recipe', 'general'
     ]
-  }).default('workshop'),
+  }).default('general'),
 
   // Tagging
   tags: jsonb('tags'), // Array of strings for search/filtering

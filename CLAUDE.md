@@ -1,6 +1,6 @@
 # Goeduitje Backend - Admin CMS
 
-Admin dashboard for Goeduitje workshop management. Handles workshop requests, AI-powered quote generation, content management, and email automation.
+Admin dashboard for Goeduitje workshop management. Handles workshop requests, AI-powered quote generation, content management, media gallery, and email automation.
 
 ## Project Structure
 
@@ -11,8 +11,9 @@ src/
 │   │   ├── auth/[...nextauth]/   # NextAuth authentication
 │   │   ├── content/              # FAQ, team, testimonials, recipes, pages
 │   │   ├── workshops/            # Requests + confirmed + quote preview
+│   │   ├── media/                # Media CRUD (Vercel Blob)
+│   │   ├── site-assets/          # Site assets API for frontend
 │   │   ├── google-reviews/       # Reviews visibility toggle
-│   │   ├── media/                # Media upload (Vercel Blob)
 │   │   ├── dashboard/stats/      # Dashboard statistics
 │   │   ├── activities/           # Activity types CRUD
 │   │   ├── locations/            # Locations + drinks pricing
@@ -20,7 +21,7 @@ src/
 │   │   └── settings/             # System settings
 │   ├── content/                  # CMS pages (faq, kpi, pages, recipes, team)
 │   ├── workshops/                # Workshop request management
-│   ├── media/                    # Media gallery admin
+│   ├── media/                    # Media gallery admin (grouped sections)
 │   ├── google-reviews/           # Reviews admin
 │   ├── feedback/                 # Contact form submissions
 │   ├── settings/                 # System settings UI
@@ -30,14 +31,16 @@ src/
 │   ├── Navigation.tsx            # Collapsible sidebar
 │   └── *Sheet.tsx                # CRUD side panels
 ├── db/
-│   ├── schema.ts                 # Drizzle ORM schemas
+│   ├── schema.ts                 # Drizzle ORM schemas (mediaGallery incl.)
 │   └── index.ts                  # Database connection
 ├── lib/
 │   ├── ai.ts                     # Claude API integration
 │   ├── email.ts                  # Resend email
 │   ├── pdf.ts                    # Puppeteer PDF generation
 │   └── prompt-builder.ts         # Dynamic AI prompts
-└── prompts/                      # AI prompt templates
+├── prompts/                      # AI prompt templates
+└── scripts/
+    └── migrate-site-assets.ts    # Migrate static files to Vercel Blob
 ```
 
 ## Tech Stack
@@ -75,6 +78,21 @@ Fix ALL errors before continuing. No exceptions.
 npm run db:push      # Push schema changes (sync only)
 npm run db:studio    # View database
 ```
+
+## Media Gallery (Source of Truth)
+
+Backend manages all site assets via `/media` admin. Frontend fetches at request time.
+
+| Category | Purpose | Tags |
+|----------|---------|------|
+| `site-logo` | Nav/footer logos | `nav`, `footer` |
+| `site-hero-video` | Homepage video | `desktop`, `mobile`, `mp4`, `webm` |
+| `site-hero-poster` | Video fallbacks | `desktop`, `mobile` |
+| `site-og` | Social cards | `og`, `twitter` |
+
+**API**: `GET /api/site-assets` returns structured Blob URLs for frontend.
+
+**Migration**: `npm run migrate:assets` uploads from frontend `/public/` to Vercel Blob.
 
 ## Never Do
 

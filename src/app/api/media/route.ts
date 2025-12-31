@@ -21,7 +21,7 @@ export async function GET(request: NextRequest) {
     }
 
     if (category) {
-      conditions.push(eq(mediaGallery.category, category as 'workshop' | 'setup' | 'cooking' | 'results' | 'group' | 'food' | 'venue'))
+      conditions.push(eq(mediaGallery.category, category as 'site-logo' | 'site-hero-video' | 'site-hero-poster' | 'site-og' | 'workshop-hero' | 'workshop-gallery' | 'team-photo' | 'testimonial' | 'recipe' | 'general'))
     }
 
     if (showOnWebsite === 'true') {
