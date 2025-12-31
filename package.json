@@ -8,6 +8,7 @@
     "start": "cross-env NODE_OPTIONS=--no-deprecation next start --port 3003",
     "db:push": "drizzle-kit push",
     "migrate:media": "node --env-file=.env.local --import tsx/esm scripts/migrate-media.ts",
+    "migrate:assets": "node --env-file=.env.local --import tsx/esm scripts/migrate-static-assets.ts",
     "update:shows": "node --env-file=.env.local --import tsx/esm scripts/update-past-shows.ts",
     "lint": "cross-env NODE_OPTIONS=--no-deprecation next lint",
     "type-check": "tsc --noEmit",
