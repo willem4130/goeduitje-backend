@@ -12,7 +12,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { Image as ImageIcon, Video, Music, Upload, Pencil, Trash2, GripVertical, Grid3x3 } from 'lucide-react'
+import { Image as ImageIcon, Video, Music, Upload, Pencil, Trash2, GripVertical, Grid3x3, ChevronDown, ChevronRight, Globe, Layout, Palette, Share2 } from 'lucide-react'
 import Link from 'next/link'
 import { UploadMediaSheet } from '@/components/UploadMediaSheet'
 import { EditMediaSheet } from '@/components/EditMediaSheet'
@@ -247,6 +247,39 @@ function SortableMediaCard({ item, onEdit, onDelete }: {
   )
 }
 
+// Section definitions for grouped view
+const MEDIA_SECTIONS = [
+  {
+    id: 'site-assets',
+    title: 'Site Assets',
+    description: 'Core website branding and layout elements',
+    icon: Globe,
+    categories: ['site-logo', 'site-hero-video', 'site-hero-poster', 'site-og'],
+    subsections: [
+      { category: 'site-logo', title: 'Logos', description: 'Navigation and footer logos' },
+      { category: 'site-hero-video', title: 'Hero Videos', description: 'Homepage background videos' },
+      { category: 'site-hero-poster', title: 'Hero Posters', description: 'Video fallback images' },
+      { category: 'site-og', title: 'Social/OG Images', description: 'Open Graph & Twitter cards' },
+    ]
+  },
+  {
+    id: 'content',
+    title: 'Content Images',
+    description: 'Workshop and event photography',
+    icon: Palette,
+    categories: ['workshop', 'setup', 'cooking', 'results', 'group', 'food', 'venue'],
+    subsections: [
+      { category: 'workshop', title: 'Workshop', description: 'General workshop photos' },
+      { category: 'setup', title: 'Setup', description: 'Event setup and preparation' },
+      { category: 'cooking', title: 'Cooking', description: 'Cooking in action' },
+      { category: 'results', title: 'Results', description: 'Finished dishes and creations' },
+      { category: 'group', title: 'Group', description: 'Team and group photos' },
+      { category: 'food', title: 'Food', description: 'Food close-ups and plating' },
+      { category: 'venue', title: 'Venue', description: 'Location and venue shots' },
+    ]
+  },
+]
+
 export default function MediaGallery() {
   const [media, setMedia] = useState<MediaItem[]>([])
   const [loading, setLoading] = useState(true)
@@ -257,6 +290,10 @@ export default function MediaGallery() {
   const [uploadSheetOpen, setUploadSheetOpen] = useState(false)
   const [editSheetOpen, setEditSheetOpen] = useState(false)
   const [editingMediaId, setEditingMediaId] = useState<number | null>(null)
+  const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({
+    'site-assets': true,
+    'content': true,
+  })
 
   const sensors = useSensors(
     useSensor(PointerSensor),
@@ -337,6 +374,24 @@ export default function MediaGallery() {
   const handleSheetSuccess = () => {
     fetchMedia()
   }
+
+  const toggleSection = (sectionId: string) => {
+    setExpandedSections(prev => ({
+      ...prev,
+      [sectionId]: !prev[sectionId]
+    }))
+  }
+
+  // Group media by category for sectioned view
+  const groupedMedia = media.reduce((acc, item) => {
+    const category = item.category || 'uncategorized'
+    if (!acc[category]) acc[category] = []
+    acc[category].push(item)
+    return acc
+  }, {} as Record<string, MediaItem[]>)
+
+  // Check if we should show grouped view (no specific filters applied)
+  const showGroupedView = categoryFilter === 'all' && typeFilter === 'all' && websiteFilter === 'all' && !searchQuery
 
   const deleteMediaItem = async (id: number) => {
     if (!confirm('Delete this media item?')) return
@@ -474,7 +529,135 @@ export default function MediaGallery() {
             Upload Media
           </Button>
         </Card>
+      ) : showGroupedView ? (
+        /* Grouped Sections View */
+        <div className="space-y-8">
+          {MEDIA_SECTIONS.map((section) => {
+            const SectionIcon = section.icon
+            const sectionItems = section.categories.flatMap(cat => groupedMedia[cat] || [])
+            const isExpanded = expandedSections[section.id]
+
+            return (
+              <Card key={section.id} className="overflow-hidden">
+                <button
+                  onClick={() => toggleSection(section.id)}
+                  className="w-full p-6 flex items-center justify-between hover:bg-muted/50 transition-colors"
+                >
+                  <div className="flex items-center gap-4">
+                    <div className="p-3 rounded-lg bg-primary/10">
+                      <SectionIcon className="w-6 h-6 text-primary" />
+                    </div>
+                    <div className="text-left">
+                      <h2 className="text-xl font-bold">{section.title}</h2>
+                      <p className="text-sm text-muted-foreground">{section.description}</p>
+                    </div>
+                    <Badge variant="secondary" className="ml-4">
+                      {sectionItems.length} item{sectionItems.length !== 1 ? 's' : ''}
+                    </Badge>
+                  </div>
+                  {isExpanded ? (
+                    <ChevronDown className="w-5 h-5 text-muted-foreground" />
+                  ) : (
+                    <ChevronRight className="w-5 h-5 text-muted-foreground" />
+                  )}
+                </button>
+
+                {isExpanded && (
+                  <div className="border-t">
+                    {section.subsections.map((subsection) => {
+                      const items = groupedMedia[subsection.category] || []
+                      if (items.length === 0) {
+                        return (
+                          <div key={subsection.category} className="px-6 py-4 border-b last:border-b-0">
+                            <div className="flex items-center justify-between">
+                              <div>
+                                <h3 className="font-semibold">{subsection.title}</h3>
+                                <p className="text-xs text-muted-foreground">{subsection.description}</p>
+                              </div>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => {
+                                  setCategoryFilter(subsection.category)
+                                  setUploadSheetOpen(true)
+                                }}
+                              >
+                                <Upload className="w-4 h-4 mr-1" />
+                                Add
+                              </Button>
+                            </div>
+                          </div>
+                        )
+                      }
+
+                      return (
+                        <div key={subsection.category} className="px-6 py-4 border-b last:border-b-0">
+                          <div className="flex items-center justify-between mb-3">
+                            <div>
+                              <h3 className="font-semibold">{subsection.title}</h3>
+                              <p className="text-xs text-muted-foreground">{subsection.description}</p>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <Badge variant="outline">{items.length}</Badge>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => setCategoryFilter(subsection.category)}
+                              >
+                                View All
+                              </Button>
+                            </div>
+                          </div>
+                          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3">
+                            {items.slice(0, 6).map((item) => (
+                              <div
+                                key={item.id}
+                                className="relative aspect-square rounded-lg overflow-hidden bg-muted group cursor-pointer"
+                                onClick={() => handleEditMedia(item.id)}
+                              >
+                                {item.mimeType.startsWith('image/') ? (
+                                  <img
+                                    src={item.blobUrl}
+                                    alt={item.altText || item.fileName}
+                                    className="w-full h-full object-cover"
+                                  />
+                                ) : (
+                                  <div className="w-full h-full flex items-center justify-center">
+                                    <Video className="w-8 h-8 text-muted-foreground" />
+                                  </div>
+                                )}
+                                <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                                  <Pencil className="w-5 h-5 text-white" />
+                                </div>
+                                {(item.tags as string[])?.length > 0 && (
+                                  <div className="absolute bottom-1 left-1 right-1">
+                                    <Badge variant="secondary" className="text-[9px] truncate max-w-full">
+                                      {(item.tags as string[])[0]}
+                                    </Badge>
+                                  </div>
+                                )}
+                              </div>
+                            ))}
+                            {items.length > 6 && (
+                              <div
+                                className="aspect-square rounded-lg bg-muted flex items-center justify-center cursor-pointer hover:bg-muted/80 transition-colors"
+                                onClick={() => setCategoryFilter(subsection.category)}
+                              >
+                                <span className="text-sm text-muted-foreground">+{items.length - 6} more</span>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      )
+                    })}
+                  </div>
+                )}
+              </Card>
+            )
+          })}
+        </div>
       ) : (
+        /* Flat Grid View (when filters applied) */
         <DndContext
           sensors={sensors}
           collisionDetection={closestCenter}
