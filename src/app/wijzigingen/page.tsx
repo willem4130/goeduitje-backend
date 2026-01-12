@@ -312,13 +312,15 @@ export default function WijzigingenPage() {
                         Bekijk live
                       </a>
                     )}
-                    <button
+                    <Button
+                      variant="outline"
+                      size="sm"
                       onClick={() => openDetail(item)}
-                      className="flex items-center gap-1 text-muted-foreground hover:text-foreground"
+                      className={isPending ? "border-primary text-primary hover:bg-primary/10 font-medium" : ""}
                     >
-                      <MessageSquare className="h-4 w-4" />
-                      Details & Feedback
-                    </button>
+                      <MessageSquare className="h-4 w-4 mr-1" />
+                      {isPending ? "Bekijk details eerst →" : "Details & Feedback"}
+                    </Button>
                     <span className="text-xs text-muted-foreground">
                       {new Date(item.createdAt).toLocaleDateString('nl-NL')}
                     </span>
