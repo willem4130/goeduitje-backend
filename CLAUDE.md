@@ -44,7 +44,8 @@ src/
 └── scripts/
     ├── migrate-site-assets.ts    # Migrate static files to Vercel Blob
     ├── seed-session-changes.ts   # Seed initial changes from SESSION_CHANGES.html
-    └── reset-statuses.ts         # Reset all change statuses to pending
+    ├── reset-statuses.ts         # Reset statuses (creates backup first)
+    └── restore-statuses.ts       # Restore statuses from backup
 ```
 
 ## Tech Stack
@@ -94,6 +95,7 @@ Client-facing changelog for tracking and approving development changes. Accessib
 |-------|---------|
 | `session_changes` | Development changes with status, category, screenshots |
 | `session_change_feedback` | Client feedback with text and screenshots |
+| `session_change_status_history` | Backup of all status changes for restore capability |
 
 ### API Endpoints
 
@@ -111,7 +113,9 @@ Client-facing changelog for tracking and approving development changes. Accessib
 ### Scripts
 
 ```bash
-npm run seed:changes     # Seed from SESSION_CHANGES.html data
+npm run seed:changes      # Seed from SESSION_CHANGES.html data
+npm run reset:statuses    # Reset all statuses to pending (backs up first!)
+npm run restore:statuses  # Restore statuses from backup
 ```
 
 ### Status Values
@@ -123,6 +127,20 @@ npm run seed:changes     # Seed from SESSION_CHANGES.html data
 ### Screenshots Storage
 - Changes: `changes/{changeId}/{timestamp}-{filename}` in Vercel Blob
 - Feedback: `feedback/{changeId}/{feedbackId}/{timestamp}-{filename}` in Vercel Blob
+
+### Status History Backup
+All status changes are automatically logged to `session_change_status_history` for recovery purposes.
+
+**How it works:**
+- Every status change via the UI is logged with timestamp and who made it
+- The `reset:statuses` script backs up all current statuses before resetting
+- The `restore:statuses` script restores the most recent non-pending status per item
+
+**Recovery workflow:**
+```bash
+# If client approvals were accidentally reset:
+npm run restore:statuses
+```
 
 ## Recipes Management
 
