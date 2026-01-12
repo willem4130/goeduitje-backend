@@ -498,8 +498,8 @@ export const sessionChanges = pgTable('session_changes', {
   filesChanged: text('filesChanged').array(), // Array of file paths (Prisma String[])
   changeDetails: text('changeDetails').array(), // Bullet points (Prisma String[])
   viewUrl: text('viewUrl'), // Link to see change live
-  screenshotUrl: text('screenshotUrl'), // Screenshot/image URL (Vercel Blob)
-  screenshotPath: text('screenshotPath'), // Blob path for deletion
+  screenshotUrls: text('screenshotUrls').array(), // Multiple screenshot URLs (Vercel Blob)
+  screenshotPaths: text('screenshotPaths').array(), // Blob paths for deletion
   status: text('status').default('pending').notNull(), // pending, approved, needs_changes, in_progress
   addedBy: text('addedBy').default('developer'), // developer or client
   deletedAt: timestamp('deletedAt'), // Soft delete timestamp
@@ -515,8 +515,8 @@ export const sessionChangeFeedback = pgTable('session_change_feedback', {
   id: text('id').primaryKey(),
   changeId: text('changeId').notNull(), // Foreign key to session_changes
   feedbackText: text('feedbackText'),
-  screenshotUrl: text('screenshotUrl'), // Vercel Blob URL
-  screenshotPath: text('screenshotPath'), // Blob path for deletion
+  screenshotUrls: text('screenshotUrls').array(), // Multiple Vercel Blob URLs
+  screenshotPaths: text('screenshotPaths').array(), // Blob paths for deletion
   createdAt: timestamp('createdAt').notNull().defaultNow(),
 })
 

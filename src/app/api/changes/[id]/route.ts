@@ -92,12 +92,14 @@ export async function DELETE(
 
     if (permanent) {
       // Permanent delete - remove from database
-      // First delete screenshot from Blob if exists
-      if (change.screenshotUrl) {
-        try {
-          await del(change.screenshotUrl)
-        } catch (e) {
-          console.error('Failed to delete blob:', e)
+      // Delete all screenshots from Blob
+      if (change.screenshotUrls && change.screenshotUrls.length > 0) {
+        for (const url of change.screenshotUrls) {
+          try {
+            await del(url)
+          } catch (e) {
+            console.error('Failed to delete blob:', e)
+          }
         }
       }
 
@@ -106,11 +108,13 @@ export async function DELETE(
         .where(eq(sessionChangeFeedback.changeId, id))
 
       for (const fb of feedbacks) {
-        if (fb.screenshotUrl) {
-          try {
-            await del(fb.screenshotUrl)
-          } catch (e) {
-            console.error('Failed to delete feedback blob:', e)
+        if (fb.screenshotUrls && fb.screenshotUrls.length > 0) {
+          for (const url of fb.screenshotUrls) {
+            try {
+              await del(url)
+            } catch (e) {
+              console.error('Failed to delete feedback blob:', e)
+            }
           }
         }
       }

@@ -21,7 +21,7 @@ type SessionChange = {
   filesChanged: string[] | null
   changeDetails: string[] | null
   viewUrl: string | null
-  screenshotUrl: string | null
+  screenshotUrls: string[] | null
   status: 'pending' | 'approved' | 'needs_changes' | 'in_progress'
   addedBy: string | null
   deletedAt: string | null
@@ -32,7 +32,7 @@ type Feedback = {
   id: string
   changeId: string
   feedbackText: string | null
-  screenshotUrl: string | null
+  screenshotUrls: string[] | null
   createdAt: string
 }
 
@@ -70,11 +70,11 @@ export default function WijzigingenPage() {
     changeDetails: '',
     addedBy: 'developer',
   })
-  const [addScreenshot, setAddScreenshot] = useState<File | null>(null)
+  const [addScreenshots, setAddScreenshots] = useState<File[]>([])
 
   // Feedback form state
   const [newFeedback, setNewFeedback] = useState('')
-  const [screenshotFile, setScreenshotFile] = useState<File | null>(null)
+  const [screenshotFiles, setScreenshotFiles] = useState<File[]>([])
   const [submittingFeedback, setSubmittingFeedback] = useState(false)
 
   const fetchItems = useCallback(async () => {
@@ -186,8 +186,9 @@ export default function WijzigingenPage() {
       formDataObj.append('filesChanged', formData.filesChanged)
       formDataObj.append('changeDetails', formData.changeDetails)
       formDataObj.append('addedBy', formData.addedBy)
-      if (addScreenshot) {
-        formDataObj.append('screenshot', addScreenshot)
+      // Append all screenshots
+      for (const file of addScreenshots) {
+        formDataObj.append('screenshots', file)
       }
 
       const res = await fetch('/api/changes', {
@@ -198,7 +199,7 @@ export default function WijzigingenPage() {
       toast.success('Wijziging toegevoegd')
       setAddOpen(false)
       setFormData({ title: '', description: '', category: '', viewUrl: '', filesChanged: '', changeDetails: '', addedBy: 'developer' })
-      setAddScreenshot(null)
+      setAddScreenshots([])
       fetchItems()
     } catch {
       toast.error('Kon wijziging niet toevoegen')
@@ -208,7 +209,7 @@ export default function WijzigingenPage() {
   }
 
   const handleFeedbackSubmit = async () => {
-    if (!selectedChange || (!newFeedback && !screenshotFile)) {
+    if (!selectedChange || (!newFeedback && screenshotFiles.length === 0)) {
       toast.error('Voeg tekst of screenshot toe')
       return
     }
@@ -216,7 +217,10 @@ export default function WijzigingenPage() {
     try {
       const formDataObj = new FormData()
       if (newFeedback) formDataObj.append('feedbackText', newFeedback)
-      if (screenshotFile) formDataObj.append('screenshot', screenshotFile)
+      // Append all screenshots
+      for (const file of screenshotFiles) {
+        formDataObj.append('screenshots', file)
+      }
 
       const res = await fetch(`/api/changes/${selectedChange.id}/feedback`, {
         method: 'POST',
@@ -225,7 +229,7 @@ export default function WijzigingenPage() {
       if (!res.ok) throw new Error('Failed')
       toast.success('Feedback toegevoegd')
       setNewFeedback('')
-      setScreenshotFile(null)
+      setScreenshotFiles([])
       fetchFeedback(selectedChange.id)
     } catch {
       toast.error('Kon feedback niet toevoegen')
@@ -351,7 +355,7 @@ export default function WijzigingenPage() {
                   <div className="flex-1 cursor-pointer" onClick={() => !isDeleted && openDetail(item)}>
                     <div className="flex items-center gap-2">
                       <CardTitle className={`text-lg ${isInProgress || isDeleted ? 'text-gray-400' : ''}`}>{item.title}</CardTitle>
-                      {item.screenshotUrl && <ImageIcon className="h-4 w-4 text-muted-foreground" />}
+                      {item.screenshotUrls && item.screenshotUrls.length > 0 && <ImageIcon className="h-4 w-4 text-muted-foreground" />}
                     </div>
                     {item.description && <CardDescription className="mt-1">{item.description}</CardDescription>}
                   </div>
@@ -575,13 +579,17 @@ export default function WijzigingenPage() {
                   </Select>
                 </div>
 
-                {/* Screenshot */}
-                {selectedChange.screenshotUrl && (
+                {/* Screenshots */}
+                {selectedChange.screenshotUrls && selectedChange.screenshotUrls.length > 0 && (
                   <div>
-                    <Label>Screenshot</Label>
-                    <a href={selectedChange.screenshotUrl} target="_blank" rel="noopener noreferrer" className="mt-2 block">
-                      <img src={selectedChange.screenshotUrl} alt="Screenshot" className="max-h-48 rounded border hover:opacity-90" />
-                    </a>
+                    <Label>Screenshots ({selectedChange.screenshotUrls.length})</Label>
+                    <div className="mt-2 grid grid-cols-2 gap-2">
+                      {selectedChange.screenshotUrls.map((url, i) => (
+                        <a key={i} href={url} target="_blank" rel="noopener noreferrer">
+                          <img src={url} alt={`Screenshot ${i + 1}`} className="rounded border hover:opacity-90 w-full h-32 object-cover" />
+                        </a>
+                      ))}
+                    </div>
                   </div>
                 )}
 
@@ -642,10 +650,14 @@ export default function WijzigingenPage() {
                       {feedback.map((fb) => (
                         <div key={fb.id} className="bg-muted p-3 rounded-lg relative group">
                           {fb.feedbackText && <p className="text-sm">{fb.feedbackText}</p>}
-                          {fb.screenshotUrl && (
-                            <a href={fb.screenshotUrl} target="_blank" rel="noopener noreferrer" className="mt-2 block">
-                              <img src={fb.screenshotUrl} alt="Screenshot" className="max-h-40 rounded border" />
-                            </a>
+                          {fb.screenshotUrls && fb.screenshotUrls.length > 0 && (
+                            <div className="mt-2 grid grid-cols-2 gap-2">
+                              {fb.screenshotUrls.map((url, i) => (
+                                <a key={i} href={url} target="_blank" rel="noopener noreferrer">
+                                  <img src={url} alt={`Screenshot ${i + 1}`} className="rounded border w-full h-24 object-cover" />
+                                </a>
+                              ))}
+                            </div>
                           )}
                           <div className="flex items-center justify-between mt-2">
                             <span className="text-xs text-muted-foreground">
@@ -670,19 +682,30 @@ export default function WijzigingenPage() {
                       onChange={(e) => setNewFeedback(e.target.value)}
                       className="min-h-20"
                     />
-                    <div className="flex items-center gap-2">
+                    <div className="space-y-2">
                       <label className="flex items-center gap-2 cursor-pointer text-sm text-muted-foreground hover:text-foreground border rounded-md px-3 py-2">
                         <input
                           type="file"
                           accept="image/*"
+                          multiple
                           className="hidden"
-                          onChange={(e) => setScreenshotFile(e.target.files?.[0] || null)}
+                          onChange={(e) => {
+                            const files = Array.from(e.target.files || [])
+                            setScreenshotFiles(prev => [...prev, ...files])
+                          }}
                         />
                         <Upload className="h-4 w-4" />
-                        {screenshotFile ? screenshotFile.name : 'Screenshot toevoegen'}
+                        Screenshots toevoegen (meerdere mogelijk)
                       </label>
-                      {screenshotFile && (
-                        <Button variant="ghost" size="sm" onClick={() => setScreenshotFile(null)}>×</Button>
+                      {screenshotFiles.length > 0 && (
+                        <div className="flex flex-wrap gap-2">
+                          {screenshotFiles.map((file, i) => (
+                            <div key={i} className="flex items-center gap-1 bg-muted px-2 py-1 rounded text-xs">
+                              {file.name}
+                              <button onClick={() => setScreenshotFiles(prev => prev.filter((_, idx) => idx !== i))} className="text-muted-foreground hover:text-foreground">×</button>
+                            </div>
+                          ))}
+                        </div>
                       )}
                     </div>
                     <Button onClick={handleFeedbackSubmit} disabled={submittingFeedback} className="w-full">
@@ -733,20 +756,31 @@ export default function WijzigingenPage() {
               </Select>
             </div>
             <div>
-              <Label>Screenshot / Afbeelding</Label>
-              <div className="mt-1">
+              <Label>Screenshots / Afbeeldingen</Label>
+              <div className="mt-1 space-y-2">
                 <label className="flex items-center gap-2 cursor-pointer text-sm text-muted-foreground hover:text-foreground border rounded-md px-3 py-2 w-full">
                   <input
                     type="file"
                     accept="image/*"
+                    multiple
                     className="hidden"
-                    onChange={(e) => setAddScreenshot(e.target.files?.[0] || null)}
+                    onChange={(e) => {
+                      const files = Array.from(e.target.files || [])
+                      setAddScreenshots(prev => [...prev, ...files])
+                    }}
                   />
                   <Upload className="h-4 w-4" />
-                  {addScreenshot ? addScreenshot.name : 'Afbeelding toevoegen'}
+                  Afbeeldingen toevoegen (meerdere mogelijk)
                 </label>
-                {addScreenshot && (
-                  <Button variant="ghost" size="sm" onClick={() => setAddScreenshot(null)} className="mt-1">Verwijderen</Button>
+                {addScreenshots.length > 0 && (
+                  <div className="flex flex-wrap gap-2">
+                    {addScreenshots.map((file, i) => (
+                      <div key={i} className="flex items-center gap-1 bg-muted px-2 py-1 rounded text-xs">
+                        {file.name}
+                        <button onClick={() => setAddScreenshots(prev => prev.filter((_, idx) => idx !== i))} className="text-muted-foreground hover:text-foreground">×</button>
+                      </div>
+                    ))}
+                  </div>
                 )}
               </div>
             </div>

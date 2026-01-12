@@ -23,7 +23,7 @@ export async function GET(
   }
 }
 
-// POST /api/changes/[id]/feedback - Add feedback with optional screenshot
+// POST /api/changes/[id]/feedback - Add feedback with optional multiple screenshots
 export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -33,46 +33,50 @@ export async function POST(
     const formData = await request.formData()
 
     const feedbackText = formData.get('feedbackText') as string | null
-    const file = formData.get('screenshot') as File | null
 
-    // Validate - need at least text or screenshot
-    if (!feedbackText && !file) {
+    // Handle multiple screenshot uploads
+    const screenshotUrls: string[] = []
+    const screenshotPaths: string[] = []
+
+    // Get all files from 'screenshots' field (multiple)
+    const files = formData.getAll('screenshots') as File[]
+
+    // Also check for single 'screenshot' field for backwards compatibility
+    const singleFile = formData.get('screenshot') as File | null
+    if (singleFile && singleFile.size > 0) {
+      files.push(singleFile)
+    }
+
+    // Validate - need at least text or screenshots
+    if (!feedbackText && files.length === 0) {
       return NextResponse.json(
-        { error: 'Feedback text or screenshot required' },
+        { error: 'Feedback text or screenshots required' },
         { status: 400 }
       )
     }
 
-    let screenshotUrl: string | null = null
-    let screenshotPath: string | null = null
+    // Upload all screenshots
+    const feedbackId = randomUUID()
+    for (const file of files) {
+      if (file && file.size > 0) {
+        if (!file.type.startsWith('image/')) {
+          continue // Skip non-image files
+        }
 
-    // Upload screenshot to Vercel Blob if provided
-    if (file) {
-      // Validate file type
-      if (!file.type.startsWith('image/')) {
-        return NextResponse.json(
-          { error: 'Only image files are allowed for screenshots' },
-          { status: 400 }
-        )
+        const blobPath = `feedback/${changeId}/${feedbackId}/${Date.now()}-${file.name}`
+        const blob = await put(blobPath, file, { access: 'public' })
+        screenshotUrls.push(blob.url)
+        screenshotPaths.push(blobPath)
       }
-
-      // Upload to Vercel Blob organized by changeId
-      const blobPath = `feedback/${changeId}/${Date.now()}-${file.name}`
-      const blob = await put(blobPath, file, {
-        access: 'public',
-      })
-
-      screenshotUrl = blob.url
-      screenshotPath = blobPath
     }
 
     // Create feedback record
     const [feedback] = await db.insert(sessionChangeFeedback).values({
-      id: randomUUID(),
+      id: feedbackId,
       changeId,
       feedbackText,
-      screenshotUrl,
-      screenshotPath,
+      screenshotUrls: screenshotUrls.length > 0 ? screenshotUrls : null,
+      screenshotPaths: screenshotPaths.length > 0 ? screenshotPaths : null,
     }).returning()
 
     return NextResponse.json({ feedback }, { status: 201 })
@@ -92,7 +96,7 @@ export async function DELETE(request: NextRequest) {
       return NextResponse.json({ error: 'feedbackId required' }, { status: 400 })
     }
 
-    // Get feedback to check for screenshot
+    // Get feedback to check for screenshots
     const [feedback] = await db.select().from(sessionChangeFeedback)
       .where(eq(sessionChangeFeedback.id, feedbackId))
 
@@ -100,13 +104,14 @@ export async function DELETE(request: NextRequest) {
       return NextResponse.json({ error: 'Feedback not found' }, { status: 404 })
     }
 
-    // Delete screenshot from Blob if exists
-    if (feedback.screenshotUrl) {
-      try {
-        await del(feedback.screenshotUrl)
-      } catch (e) {
-        console.error('Failed to delete blob:', e)
-        // Continue anyway - blob might already be deleted
+    // Delete all screenshots from Blob
+    if (feedback.screenshotUrls && feedback.screenshotUrls.length > 0) {
+      for (const url of feedback.screenshotUrls) {
+        try {
+          await del(url)
+        } catch (e) {
+          console.error('Failed to delete blob:', e)
+        }
       }
     }
 

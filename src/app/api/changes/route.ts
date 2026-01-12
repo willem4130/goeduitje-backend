@@ -39,7 +39,7 @@ export async function GET(request: Request) {
   }
 }
 
-// POST /api/changes - Create new change (supports FormData with screenshot)
+// POST /api/changes - Create new change (supports FormData with multiple screenshots)
 export async function POST(request: Request) {
   try {
     const contentType = request.headers.get('content-type') || ''
@@ -51,11 +51,11 @@ export async function POST(request: Request) {
     let filesChanged: string[] = []
     let changeDetails: string[] = []
     let addedBy: string = 'developer'
-    let screenshotUrl: string | null = null
-    let screenshotPath: string | null = null
+    const screenshotUrls: string[] = []
+    const screenshotPaths: string[] = []
 
     if (contentType.includes('multipart/form-data')) {
-      // Handle FormData with potential file upload
+      // Handle FormData with potential file uploads
       const formData = await request.formData()
 
       title = formData.get('title') as string
@@ -69,18 +69,23 @@ export async function POST(request: Request) {
       filesChanged = filesChangedStr ? filesChangedStr.split('\n').filter(Boolean) : []
       changeDetails = changeDetailsStr ? changeDetailsStr.split('\n').filter(Boolean) : []
 
-      // Handle screenshot upload
-      const file = formData.get('screenshot') as File | null
-      if (file && file.size > 0) {
-        if (!file.type.startsWith('image/')) {
-          return NextResponse.json({ error: 'Only image files are allowed' }, { status: 400 })
-        }
+      // Handle multiple screenshot uploads
+      const id = randomUUID()
+      const files = formData.getAll('screenshots') as File[]
 
-        const id = randomUUID()
-        const blobPath = `changes/${id}/${Date.now()}-${file.name}`
-        const blob = await put(blobPath, file, { access: 'public' })
-        screenshotUrl = blob.url
-        screenshotPath = blobPath
+      // Also check for single 'screenshot' field for backwards compatibility
+      const singleFile = formData.get('screenshot') as File | null
+      if (singleFile && singleFile.size > 0) {
+        files.push(singleFile)
+      }
+
+      for (const file of files) {
+        if (file && file.size > 0 && file.type.startsWith('image/')) {
+          const blobPath = `changes/${id}/${Date.now()}-${file.name}`
+          const blob = await put(blobPath, file, { access: 'public' })
+          screenshotUrls.push(blob.url)
+          screenshotPaths.push(blobPath)
+        }
       }
     } else {
       // Handle JSON body
@@ -106,8 +111,8 @@ export async function POST(request: Request) {
       filesChanged,
       changeDetails,
       viewUrl,
-      screenshotUrl,
-      screenshotPath,
+      screenshotUrls: screenshotUrls.length > 0 ? screenshotUrls : null,
+      screenshotPaths: screenshotPaths.length > 0 ? screenshotPaths : null,
       status: 'pending',
       addedBy,
       updatedAt: new Date(),
