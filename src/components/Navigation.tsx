@@ -55,6 +55,13 @@ const navSections: NavSection[] = [
         href: '/',
         icon: LayoutDashboard,
       },
+    ],
+  },
+  {
+    title: 'Klant Communicatie',
+    id: 'client',
+    collapsible: false,
+    items: [
       {
         title: 'Wijzigingen',
         href: '/wijzigingen',
