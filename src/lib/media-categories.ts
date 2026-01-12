@@ -17,6 +17,7 @@ export type MediaCategoryId =
   | 'team-photo'
   | 'testimonial'
   | 'recipe'
+  | 'ons-verhaal'
   | 'general'
 
 export interface MediaCategory {
@@ -164,6 +165,18 @@ export const MEDIA_CATEGORIES: MediaCategory[] = [
     suggestedTags: ['finished-dish', 'ingredients', 'step'],
     autoSettings: { showOnWebsite: true, featuredOnHomepage: false },
     dimensions: { recommended: '1200x800', aspectRatio: '3:2' },
+  },
+  {
+    id: 'ons-verhaal',
+    label: 'Ons Verhaal Page',
+    description: 'Images and videos for the Ons Verhaal (About) page',
+    placement: '"Ons Verhaal" page - hero collage, video, content images',
+    icon: 'BookOpen',
+    group: 'page-content',
+    acceptedTypes: ['image', 'video'],
+    suggestedTags: ['hero', 'video', 'content', 'collage'],
+    autoSettings: { showOnWebsite: true, featuredOnHomepage: false },
+    dimensions: { recommended: '1200x800 (images), 1920x1080 (video)', aspectRatio: '3:2 / 16:9' },
   },
   {
     id: 'general',

@@ -24,6 +24,7 @@ import {
   Star,
   BarChart3,
   ChevronDown,
+  BookOpen,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { LucideIcon } from 'lucide-react'
@@ -109,6 +110,11 @@ const navSections: NavSection[] = [
     id: 'website-content',
     collapsible: true,
     items: [
+      {
+        title: 'Ons Verhaal',
+        href: '/content/ons-verhaal',
+        icon: BookOpen,
+      },
       {
         title: 'KPI Cijfers',
         href: '/content/kpi',

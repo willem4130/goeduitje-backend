@@ -17,25 +17,25 @@ src/
 │   │   ├── dashboard/stats/      # Dashboard statistics
 │   │   ├── activities/           # Activity types CRUD
 │   │   ├── locations/            # Locations + drinks pricing
-│   │   ├── pricing/              # Pricing tiers CRUD
-│   │   └── settings/             # System settings
+│   │   └── pricing/              # Pricing tiers CRUD
 │   ├── content/                  # CMS pages (faq, kpi, pages, recipes, team)
 │   ├── workshops/                # Workshop request management
 │   ├── media/                    # Media gallery admin (grouped sections)
 │   ├── google-reviews/           # Reviews admin
 │   ├── feedback/                 # Contact form submissions
-│   ├── settings/                 # System settings UI
 │   └── page.tsx                  # Dashboard
 ├── components/
 │   ├── ui/                       # shadcn/ui (DO NOT MODIFY)
 │   ├── Navigation.tsx            # Collapsible sidebar
-│   └── *Sheet.tsx                # CRUD side panels
+│   ├── EditMediaSheet.tsx        # Media edit panel with categories
+│   └── UploadMediaSheet.tsx      # Media upload with step-by-step flow
 ├── db/
-│   ├── schema.ts                 # Drizzle ORM schemas (mediaGallery incl.)
+│   ├── schema.ts                 # Drizzle ORM schemas
 │   └── index.ts                  # Database connection
 ├── lib/
 │   ├── ai.ts                     # Claude API integration
 │   ├── email.ts                  # Resend email
+│   ├── media-categories.ts       # Media category definitions
 │   ├── pdf.ts                    # Puppeteer PDF generation
 │   └── prompt-builder.ts         # Dynamic AI prompts
 ├── prompts/                      # AI prompt templates
@@ -55,11 +55,6 @@ npm run type-check && npm run lint
 
 Fix ALL errors before continuing. No exceptions.
 
-## Key Automations
-
-- **Status → 'offerte gemaakt'**: Triggers AI email + PDF quote generation
-- **Status → 'bevestigde opdracht'**: Auto-creates confirmedWorkshop record
-
 ## Organization Rules
 
 - API routes → `/src/app/api/[resource]/route.ts`
@@ -76,21 +71,24 @@ Fix ALL errors before continuing. No exceptions.
 
 ```bash
 npm run db:push      # Push schema changes (sync only)
-npm run db:studio    # View database
 ```
 
-## Media Gallery (Source of Truth)
+## Media Categories
 
-Backend manages all site assets via `/media` admin. Frontend fetches at request time.
+Backend manages all site assets via `/media` admin. Categories defined in `lib/media-categories.ts`:
 
-| Category | Purpose | Tags |
-|----------|---------|------|
-| `site-logo` | Nav/footer logos | `nav`, `footer` |
-| `site-hero-video` | Homepage video | `desktop`, `mobile`, `mp4`, `webm` |
-| `site-hero-poster` | Video fallbacks | `desktop`, `mobile` |
-| `site-og` | Social cards | `og`, `twitter` |
-
-**API**: `GET /api/site-assets` returns structured Blob URLs for frontend.
+| Group | Category | Placement |
+|-------|----------|-----------|
+| **Site Assets** | `site-logo` | Nav bar & footer |
+| | `site-hero-video` | Homepage full-screen background |
+| | `site-hero-poster` | Homepage fallback image |
+| | `site-og` | Social media link previews |
+| **Workshop** | `workshop-hero` | Workshop detail page hero |
+| | `workshop-gallery` | Workshop pages & "Onze Impact" |
+| **Content** | `team-photo` | "Onze Medewerkers" page |
+| | `testimonial` | "Jullie Ervaringen" page |
+| | `recipe` | Recipe pages |
+| | `general` | Miscellaneous |
 
 **Migration**: `npm run migrate:assets` uploads from frontend `/public/` to Vercel Blob.
 
