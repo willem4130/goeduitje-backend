@@ -17,6 +17,7 @@ type Recipe = {
   title: string
   slug: string
   description: string | null
+  imageUrl: string | null
   prepTime: number | null
   cookTime: number | null
   servings: number | null
@@ -24,6 +25,7 @@ type Recipe = {
   category: string | null
   ingredients: string[]
   steps: string[]
+  tips: string | null
   isPublished: boolean
 }
 
@@ -36,8 +38,8 @@ export default function RecipesPage() {
   const [sheetOpen, setSheetOpen] = useState(false)
   const [editing, setEditing] = useState<Recipe | null>(null)
   const [formData, setFormData] = useState({
-    title: '', slug: '', description: '', prepTime: '', cookTime: '', servings: '',
-    difficulty: '', category: '', ingredients: '', steps: '', isPublished: true
+    title: '', slug: '', description: '', imageUrl: '', prepTime: '', cookTime: '', servings: '',
+    difficulty: '', category: '', ingredients: '', steps: '', tips: '', isPublished: true
   })
 
   const fetchItems = async () => {
@@ -62,6 +64,7 @@ export default function RecipesPage() {
         title: formData.title,
         slug: formData.slug || formData.title.toLowerCase().replace(/\s+/g, '-'),
         description: formData.description || null,
+        imageUrl: formData.imageUrl || null,
         prepTime: formData.prepTime ? parseInt(formData.prepTime) : null,
         cookTime: formData.cookTime ? parseInt(formData.cookTime) : null,
         servings: formData.servings ? parseInt(formData.servings) : null,
@@ -69,6 +72,7 @@ export default function RecipesPage() {
         category: formData.category || null,
         ingredients: formData.ingredients.split('\n').filter(s => s.trim()),
         steps: formData.steps.split('\n').filter(s => s.trim()),
+        tips: formData.tips || null,
         isPublished: formData.isPublished,
       }
       const res = await fetch('/api/content/recipes', { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
@@ -76,7 +80,7 @@ export default function RecipesPage() {
       toast.success(editing ? 'Recipe updated' : 'Recipe created')
       setSheetOpen(false)
       setEditing(null)
-      setFormData({ title: '', slug: '', description: '', prepTime: '', cookTime: '', servings: '', difficulty: '', category: '', ingredients: '', steps: '', isPublished: true })
+      setFormData({ title: '', slug: '', description: '', imageUrl: '', prepTime: '', cookTime: '', servings: '', difficulty: '', category: '', ingredients: '', steps: '', tips: '', isPublished: true })
       fetchItems()
     } catch {
       toast.error('Operation failed')
@@ -98,17 +102,18 @@ export default function RecipesPage() {
     setEditing(item)
     setFormData({
       title: item.title, slug: item.slug, description: item.description || '',
+      imageUrl: item.imageUrl || '',
       prepTime: item.prepTime?.toString() || '', cookTime: item.cookTime?.toString() || '',
       servings: item.servings?.toString() || '', difficulty: item.difficulty || '',
       category: item.category || '', ingredients: (item.ingredients || []).join('\n'),
-      steps: (item.steps || []).join('\n'), isPublished: item.isPublished
+      steps: (item.steps || []).join('\n'), tips: item.tips || '', isPublished: item.isPublished
     })
     setSheetOpen(true)
   }
 
   const openNew = () => {
     setEditing(null)
-    setFormData({ title: '', slug: '', description: '', prepTime: '', cookTime: '', servings: '', difficulty: '', category: '', ingredients: '', steps: '', isPublished: true })
+    setFormData({ title: '', slug: '', description: '', imageUrl: '', prepTime: '', cookTime: '', servings: '', difficulty: '', category: '', ingredients: '', steps: '', tips: '', isPublished: true })
     setSheetOpen(true)
   }
 
@@ -169,6 +174,12 @@ export default function RecipesPage() {
               <div><Label>Slug</Label><Input value={formData.slug} onChange={e => setFormData({...formData, slug: e.target.value})} placeholder="auto-generated" /></div>
             </div>
             <div><Label>Description</Label><Textarea value={formData.description} onChange={e => setFormData({...formData, description: e.target.value})} /></div>
+            <div><Label>Image URL</Label><Input value={formData.imageUrl} onChange={e => setFormData({...formData, imageUrl: e.target.value})} placeholder="https://..." /></div>
+            {formData.imageUrl && (
+              <div className="relative h-32 w-32 rounded-lg overflow-hidden border">
+                <img src={formData.imageUrl} alt="Preview" className="w-full h-full object-cover" />
+              </div>
+            )}
             <div className="grid grid-cols-4 gap-4">
               <div><Label>Prep (min)</Label><Input type="number" value={formData.prepTime} onChange={e => setFormData({...formData, prepTime: e.target.value})} /></div>
               <div><Label>Cook (min)</Label><Input type="number" value={formData.cookTime} onChange={e => setFormData({...formData, cookTime: e.target.value})} /></div>
@@ -190,6 +201,7 @@ export default function RecipesPage() {
             </div>
             <div><Label>Ingredients (one per line)</Label><Textarea value={formData.ingredients} onChange={e => setFormData({...formData, ingredients: e.target.value})} className="min-h-24" /></div>
             <div><Label>Steps (one per line)</Label><Textarea value={formData.steps} onChange={e => setFormData({...formData, steps: e.target.value})} className="min-h-24" /></div>
+            <div><Label>Tips</Label><Textarea value={formData.tips} onChange={e => setFormData({...formData, tips: e.target.value})} placeholder="Cooking tips..." /></div>
             <div className="flex items-center gap-2"><Switch checked={formData.isPublished} onCheckedChange={(v: boolean) => setFormData({...formData, isPublished: v})} /><Label>Published</Label></div>
             <Button onClick={handleSubmit} className="w-full">{editing ? 'Save Changes' : 'Create Recipe'}</Button>
           </div>
