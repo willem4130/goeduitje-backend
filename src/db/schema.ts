@@ -485,6 +485,39 @@ export const contactFeedback = pgTable('Feedback', {
   updatedAt: timestamp('updatedAt').notNull(),
 })
 
+// ============================================================
+// SESSION CHANGES TABLE
+// Tracks development changes for client validation
+// ============================================================
+export const sessionChanges = pgTable('session_changes', {
+  id: text('id').primaryKey(),
+  title: text('title').notNull(),
+  description: text('description'),
+  category: text('category'), // Contact, Navigation, Content, Bug, etc.
+  filesChanged: jsonb('files_changed').$type<string[]>(),
+  changeDetails: jsonb('change_details').$type<string[]>(), // Bullet points
+  viewUrl: text('view_url'), // Link to see change live
+  status: text('status', {
+    enum: ['pending', 'approved', 'needs_changes']
+  }).default('pending').notNull(),
+  addedBy: text('added_by'), // developer or client
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+  updatedAt: timestamp('updated_at').notNull().defaultNow(),
+})
+
+// ============================================================
+// SESSION CHANGE FEEDBACK TABLE
+// Client feedback on changes with screenshots
+// ============================================================
+export const sessionChangeFeedback = pgTable('session_change_feedback', {
+  id: text('id').primaryKey(),
+  changeId: text('change_id').notNull(),
+  feedbackText: text('feedback_text'),
+  screenshotUrl: text('screenshot_url'), // Vercel Blob URL
+  screenshotPath: text('screenshot_path'), // Blob path for deletion
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+})
+
 // Type exports for content tables
 export type FAQ = typeof faq.$inferSelect
 export type NewFAQ = typeof faq.$inferInsert
@@ -515,3 +548,9 @@ export type NewPriceTier = typeof priceTier.$inferInsert
 
 export type ContactFeedback = typeof contactFeedback.$inferSelect
 export type NewContactFeedback = typeof contactFeedback.$inferInsert
+
+export type SessionChange = typeof sessionChanges.$inferSelect
+export type NewSessionChange = typeof sessionChanges.$inferInsert
+
+export type SessionChangeFeedback = typeof sessionChangeFeedback.$inferSelect
+export type NewSessionChangeFeedback = typeof sessionChangeFeedback.$inferInsert

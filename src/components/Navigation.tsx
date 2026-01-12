@@ -25,6 +25,7 @@ import {
   BarChart3,
   ChevronDown,
   BookOpen,
+  ClipboardList,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { LucideIcon } from 'lucide-react'
@@ -53,6 +54,11 @@ const navSections: NavSection[] = [
         title: 'Dashboard',
         href: '/',
         icon: LayoutDashboard,
+      },
+      {
+        title: 'Wijzigingen',
+        href: '/wijzigingen',
+        icon: ClipboardList,
       },
     ],
   },
