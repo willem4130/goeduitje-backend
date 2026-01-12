@@ -10,7 +10,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { Plus, ExternalLink, MessageSquare, Check, AlertCircle, Clock, Loader2, Image as ImageIcon, Trash2, Upload, Wrench } from 'lucide-react'
+import { Plus, ExternalLink, MessageSquare, Check, AlertCircle, Clock, Loader2, Trash2, Upload, Wrench, ThumbsUp, ThumbsDown, Eye } from 'lucide-react'
 import { toast } from 'sonner'
 
 type SessionChange = {
@@ -35,10 +35,10 @@ type Feedback = {
 }
 
 const statusConfig = {
-  pending: { label: 'Te beoordelen', color: 'bg-yellow-100 text-yellow-800', icon: Clock },
-  approved: { label: 'Goedgekeurd', color: 'bg-green-100 text-green-800', icon: Check },
-  needs_changes: { label: 'Aanpassen', color: 'bg-red-100 text-red-800', icon: AlertCircle },
-  in_progress: { label: 'In ontwikkeling', color: 'bg-gray-100 text-gray-500', icon: Wrench },
+  pending: { label: 'Te beoordelen', color: 'bg-yellow-100 text-yellow-800 border-yellow-200', icon: Clock },
+  approved: { label: 'Goedgekeurd', color: 'bg-green-100 text-green-800 border-green-200', icon: Check },
+  needs_changes: { label: 'Aanpassen', color: 'bg-red-100 text-red-800 border-red-200', icon: AlertCircle },
+  in_progress: { label: 'In ontwikkeling', color: 'bg-gray-100 text-gray-500 border-gray-200', icon: Wrench },
 }
 
 const categories = ['Contact', 'Navigatie', 'Content', 'Design', 'Bug', 'Feature', 'Performance']
@@ -47,6 +47,7 @@ export default function WijzigingenPage() {
   const [items, setItems] = useState<SessionChange[]>([])
   const [loading, setLoading] = useState(true)
   const [activeTab, setActiveTab] = useState('all')
+  const [updatingId, setUpdatingId] = useState<string | null>(null)
 
   // Detail sheet state
   const [detailOpen, setDetailOpen] = useState(false)
@@ -103,6 +104,25 @@ export default function WijzigingenPage() {
     setSelectedChange(item)
     setDetailOpen(true)
     fetchFeedback(item.id)
+  }
+
+  // Quick status update (for card buttons)
+  const quickUpdateStatus = async (e: React.MouseEvent, id: string, status: string) => {
+    e.stopPropagation() // Prevent card click
+    setUpdatingId(id)
+    try {
+      await fetch(`/api/changes/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status }),
+      })
+      toast.success(status === 'approved' ? '✓ Goedgekeurd!' : 'Gemarkeerd voor aanpassing')
+      fetchItems()
+    } catch {
+      toast.error('Kon status niet bijwerken')
+    } finally {
+      setUpdatingId(null)
+    }
   }
 
   const handleStatusChange = async (status: string) => {
@@ -197,6 +217,9 @@ export default function WijzigingenPage() {
     }
   }
 
+  // Count pending items for header
+  const pendingCount = items.filter(i => i.status === 'pending').length
+
   if (loading) return <div className="flex items-center justify-center h-64"><Loader2 className="h-8 w-8 animate-spin" /></div>
 
   return (
@@ -205,16 +228,24 @@ export default function WijzigingenPage() {
       <div className="flex justify-between items-start mb-6">
         <div>
           <h1 className="text-3xl font-bold">Wijzigingen</h1>
-          <p className="text-muted-foreground">Bekijk en valideer ontwikkelingswijzigingen</p>
+          <p className="text-muted-foreground">
+            {pendingCount > 0 ? (
+              <span className="text-yellow-600 font-medium">{pendingCount} wijziging{pendingCount !== 1 ? 'en' : ''} wacht{pendingCount === 1 ? '' : 'en'} op uw beoordeling</span>
+            ) : (
+              'Alle wijzigingen zijn beoordeeld'
+            )}
+          </p>
         </div>
-        <Button onClick={() => setAddOpen(true)}><Plus className="h-4 w-4 mr-2" />Nieuwe Wijziging</Button>
+        <Button onClick={() => setAddOpen(true)} variant="outline"><Plus className="h-4 w-4 mr-2" />Nieuwe Wijziging</Button>
       </div>
 
       {/* Filter Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="mb-6">
         <TabsList>
           <TabsTrigger value="all">Alles ({items.length})</TabsTrigger>
-          <TabsTrigger value="pending">Te beoordelen</TabsTrigger>
+          <TabsTrigger value="pending" className="data-[state=active]:bg-yellow-100">
+            Te beoordelen {pendingCount > 0 && <Badge className="ml-2 bg-yellow-500">{pendingCount}</Badge>}
+          </TabsTrigger>
           <TabsTrigger value="in_progress">In ontwikkeling</TabsTrigger>
           <TabsTrigger value="approved">Goedgekeurd</TabsTrigger>
           <TabsTrigger value="needs_changes">Aanpassen</TabsTrigger>
@@ -226,19 +257,21 @@ export default function WijzigingenPage() {
         {items.map((item) => {
           const StatusIcon = statusConfig[item.status].icon
           const isInProgress = item.status === 'in_progress'
+          const isPending = item.status === 'pending'
+          const isUpdating = updatingId === item.id
+
           return (
             <Card
               key={item.id}
-              className={`hover:shadow-md transition-shadow cursor-pointer ${isInProgress ? 'opacity-50 bg-gray-50' : ''}`}
-              onClick={() => openDetail(item)}
+              className={`transition-all ${isInProgress ? 'opacity-50 bg-gray-50' : ''} ${isPending ? 'border-yellow-200 bg-yellow-50/30' : ''}`}
             >
               <CardHeader className="pb-2">
-                <div className="flex items-start justify-between">
-                  <div className="flex-1">
+                <div className="flex items-start justify-between gap-4">
+                  <div className="flex-1 cursor-pointer" onClick={() => openDetail(item)}>
                     <CardTitle className={`text-lg ${isInProgress ? 'text-gray-400' : ''}`}>{item.title}</CardTitle>
                     {item.description && <CardDescription className="mt-1">{item.description}</CardDescription>}
                   </div>
-                  <div className="flex gap-2 ml-4">
+                  <div className="flex items-center gap-2">
                     {item.category && <Badge variant="outline" className={isInProgress ? 'opacity-50' : ''}>{item.category}</Badge>}
                     <Badge className={statusConfig[item.status].color}>
                       <StatusIcon className="h-3 w-3 mr-1" />
@@ -248,20 +281,57 @@ export default function WijzigingenPage() {
                 </div>
               </CardHeader>
               <CardContent className="pt-2">
-                <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                  {item.viewUrl && (
-                    <span className="flex items-center gap-1">
-                      <ExternalLink className="h-3 w-3" />
-                      Bekijk live
+                <div className="flex items-center justify-between">
+                  {/* Left side - links */}
+                  <div className="flex items-center gap-3 text-sm">
+                    {item.viewUrl && (
+                      <a
+                        href={item.viewUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        onClick={(e) => e.stopPropagation()}
+                        className="flex items-center gap-1 text-primary hover:underline"
+                      >
+                        <Eye className="h-4 w-4" />
+                        Bekijk live
+                      </a>
+                    )}
+                    <button
+                      onClick={() => openDetail(item)}
+                      className="flex items-center gap-1 text-muted-foreground hover:text-foreground"
+                    >
+                      <MessageSquare className="h-4 w-4" />
+                      Details & Feedback
+                    </button>
+                    <span className="text-xs text-muted-foreground">
+                      {new Date(item.createdAt).toLocaleDateString('nl-NL')}
                     </span>
+                  </div>
+
+                  {/* Right side - quick actions for pending items */}
+                  {isPending && (
+                    <div className="flex items-center gap-2">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="text-red-600 hover:text-red-700 hover:bg-red-50 border-red-200"
+                        onClick={(e) => quickUpdateStatus(e, item.id, 'needs_changes')}
+                        disabled={isUpdating}
+                      >
+                        {isUpdating ? <Loader2 className="h-4 w-4 animate-spin" /> : <ThumbsDown className="h-4 w-4 mr-1" />}
+                        Aanpassen
+                      </Button>
+                      <Button
+                        size="sm"
+                        className="bg-green-600 hover:bg-green-700 text-white"
+                        onClick={(e) => quickUpdateStatus(e, item.id, 'approved')}
+                        disabled={isUpdating}
+                      >
+                        {isUpdating ? <Loader2 className="h-4 w-4 animate-spin" /> : <ThumbsUp className="h-4 w-4 mr-1" />}
+                        Goedkeuren
+                      </Button>
+                    </div>
                   )}
-                  <span className="flex items-center gap-1">
-                    <MessageSquare className="h-3 w-3" />
-                    Feedback
-                  </span>
-                  <span className="ml-auto text-xs">
-                    {new Date(item.createdAt).toLocaleDateString('nl-NL')}
-                  </span>
                 </div>
               </CardContent>
             </Card>
@@ -270,8 +340,9 @@ export default function WijzigingenPage() {
         {items.length === 0 && (
           <Card className="py-12">
             <CardContent className="text-center text-muted-foreground">
-              <Clock className="h-12 w-12 mx-auto mb-4 opacity-50" />
-              <p>Geen wijzigingen gevonden</p>
+              <Check className="h-12 w-12 mx-auto mb-4 text-green-500" />
+              <p className="text-lg font-medium">Geen wijzigingen gevonden</p>
+              <p className="text-sm mt-1">Alle wijzigingen in deze categorie zijn afgehandeld</p>
             </CardContent>
           </Card>
         )}
@@ -285,8 +356,33 @@ export default function WijzigingenPage() {
               <SheetHeader>
                 <SheetTitle>{selectedChange.title}</SheetTitle>
               </SheetHeader>
+
+              {/* Quick Action Bar for pending items */}
+              {selectedChange.status === 'pending' && (
+                <div className="mt-4 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+                  <p className="text-sm text-yellow-800 mb-3 font-medium">Beoordeel deze wijziging:</p>
+                  <div className="flex gap-2">
+                    <Button
+                      className="flex-1 bg-green-600 hover:bg-green-700"
+                      onClick={() => handleStatusChange('approved')}
+                    >
+                      <ThumbsUp className="h-4 w-4 mr-2" />
+                      Goedkeuren
+                    </Button>
+                    <Button
+                      variant="outline"
+                      className="flex-1 border-red-200 text-red-600 hover:bg-red-50"
+                      onClick={() => handleStatusChange('needs_changes')}
+                    >
+                      <ThumbsDown className="h-4 w-4 mr-2" />
+                      Aanpassen nodig
+                    </Button>
+                  </div>
+                </div>
+              )}
+
               <div className="mt-6 space-y-6">
-                {/* Status Select */}
+                {/* Current Status */}
                 <div>
                   <Label>Status</Label>
                   <Select value={selectedChange.status} onValueChange={handleStatusChange}>
@@ -302,6 +398,19 @@ export default function WijzigingenPage() {
                   </Select>
                 </div>
 
+                {/* View URL - Prominent */}
+                {selectedChange.viewUrl && (
+                  <a
+                    href={selectedChange.viewUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center justify-center gap-2 p-3 bg-primary/10 text-primary rounded-lg hover:bg-primary/20 transition-colors"
+                  >
+                    <ExternalLink className="h-5 w-5" />
+                    <span className="font-medium">Bekijk wijziging live op de website</span>
+                  </a>
+                )}
+
                 {/* Description */}
                 {selectedChange.description && (
                   <div>
@@ -310,39 +419,34 @@ export default function WijzigingenPage() {
                   </div>
                 )}
 
-                {/* Files */}
-                {selectedChange.filesChanged && selectedChange.filesChanged.length > 0 && (
-                  <div>
-                    <Label>Aangepaste bestanden</Label>
-                    <ul className="mt-1 text-sm font-mono bg-muted p-2 rounded">
-                      {selectedChange.filesChanged.map((f, i) => <li key={i}>{f}</li>)}
-                    </ul>
-                  </div>
-                )}
-
                 {/* Details */}
                 {selectedChange.changeDetails && selectedChange.changeDetails.length > 0 && (
                   <div>
-                    <Label>Wijzigingen</Label>
-                    <ul className="mt-1 text-sm list-disc list-inside">
+                    <Label>Wat is er aangepast?</Label>
+                    <ul className="mt-1 text-sm list-disc list-inside space-y-1">
                       {selectedChange.changeDetails.map((d, i) => <li key={i}>{d}</li>)}
                     </ul>
                   </div>
                 )}
 
-                {/* View URL */}
-                {selectedChange.viewUrl && (
-                  <div>
-                    <a href={selectedChange.viewUrl} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline flex items-center gap-1">
-                      <ExternalLink className="h-4 w-4" />
-                      Bekijk live
-                    </a>
-                  </div>
+                {/* Files (collapsed by default - developer info) */}
+                {selectedChange.filesChanged && selectedChange.filesChanged.length > 0 && (
+                  <details className="group">
+                    <summary className="cursor-pointer text-sm text-muted-foreground hover:text-foreground">
+                      Technische details ({selectedChange.filesChanged.length} bestanden)
+                    </summary>
+                    <ul className="mt-2 text-xs font-mono bg-muted p-2 rounded">
+                      {selectedChange.filesChanged.map((f, i) => <li key={i}>{f}</li>)}
+                    </ul>
+                  </details>
                 )}
 
                 {/* Feedback Section */}
                 <div className="border-t pt-6">
                   <Label className="text-base font-semibold">Feedback ({feedback.length})</Label>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    Voeg opmerkingen of screenshots toe als u iets wilt aanpassen
+                  </p>
 
                   {loadingFeedback ? (
                     <div className="py-4 text-center"><Loader2 className="h-5 w-5 animate-spin mx-auto" /></div>
@@ -366,20 +470,21 @@ export default function WijzigingenPage() {
                           </div>
                         </div>
                       ))}
-                      {feedback.length === 0 && <p className="text-sm text-muted-foreground py-2">Nog geen feedback</p>}
+                      {feedback.length === 0 && <p className="text-sm text-muted-foreground py-2 italic">Nog geen feedback toegevoegd</p>}
                     </div>
                   )}
 
                   {/* Add Feedback Form */}
-                  <div className="mt-4 space-y-3 bg-muted/50 p-4 rounded-lg">
+                  <div className="mt-4 space-y-3 bg-muted/50 p-4 rounded-lg border">
+                    <Label>Nieuwe feedback</Label>
                     <Textarea
-                      placeholder="Schrijf feedback..."
+                      placeholder="Beschrijf wat er aangepast moet worden..."
                       value={newFeedback}
                       onChange={(e) => setNewFeedback(e.target.value)}
                       className="min-h-20"
                     />
                     <div className="flex items-center gap-2">
-                      <label className="flex items-center gap-2 cursor-pointer text-sm text-muted-foreground hover:text-foreground">
+                      <label className="flex items-center gap-2 cursor-pointer text-sm text-muted-foreground hover:text-foreground border rounded-md px-3 py-2">
                         <input
                           type="file"
                           accept="image/*"
@@ -387,10 +492,10 @@ export default function WijzigingenPage() {
                           onChange={(e) => setScreenshotFile(e.target.files?.[0] || null)}
                         />
                         <Upload className="h-4 w-4" />
-                        {screenshotFile ? screenshotFile.name : 'Screenshot uploaden'}
+                        {screenshotFile ? screenshotFile.name : 'Screenshot toevoegen'}
                       </label>
                       {screenshotFile && (
-                        <Button variant="ghost" size="sm" onClick={() => setScreenshotFile(null)}>Verwijder</Button>
+                        <Button variant="ghost" size="sm" onClick={() => setScreenshotFile(null)}>×</Button>
                       )}
                     </div>
                     <Button onClick={handleFeedbackSubmit} disabled={submittingFeedback} className="w-full">
@@ -400,13 +505,16 @@ export default function WijzigingenPage() {
                   </div>
                 </div>
 
-                {/* Delete */}
-                <div className="border-t pt-4">
-                  <Button variant="destructive" onClick={() => handleDelete(selectedChange.id)} className="w-full">
+                {/* Delete - less prominent */}
+                <details className="border-t pt-4">
+                  <summary className="cursor-pointer text-sm text-muted-foreground hover:text-foreground">
+                    Geavanceerde opties
+                  </summary>
+                  <Button variant="destructive" onClick={() => handleDelete(selectedChange.id)} className="w-full mt-3" size="sm">
                     <Trash2 className="h-4 w-4 mr-2" />
                     Wijziging verwijderen
                   </Button>
-                </div>
+                </details>
               </div>
             </>
           )}
