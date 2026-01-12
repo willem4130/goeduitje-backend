@@ -1,6 +1,6 @@
 # Goeduitje Backend - Admin CMS
 
-Admin dashboard for Goeduitje workshop management. Handles workshop requests, AI-powered quote generation, content management, media gallery, and email automation.
+Admin dashboard for Goeduitje workshop management. Handles workshop requests, AI-powered quote generation, content management, media gallery, email automation, and development change tracking.
 
 ## Project Structure
 
@@ -9,6 +9,7 @@ src/
 ├── app/
 │   ├── api/                      # REST API endpoints
 │   │   ├── auth/[...nextauth]/   # NextAuth authentication
+│   │   ├── changes/              # Development changes CRUD + feedback
 │   │   ├── content/              # FAQ, team, testimonials, recipes, pages
 │   │   ├── workshops/            # Requests + confirmed + quote preview
 │   │   ├── media/                # Media CRUD (Vercel Blob)
@@ -20,6 +21,7 @@ src/
 │   │   └── pricing/              # Pricing tiers CRUD
 │   ├── content/                  # CMS pages (faq, kpi, pages, recipes, team)
 │   ├── workshops/                # Workshop request management
+│   ├── wijzigingen/              # Development changes admin page
 │   ├── media/                    # Media gallery admin (grouped sections)
 │   ├── google-reviews/           # Reviews admin
 │   ├── feedback/                 # Contact form submissions
@@ -40,7 +42,9 @@ src/
 │   └── prompt-builder.ts         # Dynamic AI prompts
 ├── prompts/                      # AI prompt templates
 └── scripts/
-    └── migrate-site-assets.ts    # Migrate static files to Vercel Blob
+    ├── migrate-site-assets.ts    # Migrate static files to Vercel Blob
+    ├── seed-session-changes.ts   # Seed initial changes from SESSION_CHANGES.html
+    └── reset-statuses.ts         # Reset all change statuses to pending
 ```
 
 ## Tech Stack
@@ -72,6 +76,53 @@ Fix ALL errors before continuing. No exceptions.
 ```bash
 npm run db:push      # Push schema changes (sync only)
 ```
+
+## Wijzigingen (Development Changes)
+
+Client-facing changelog for tracking and approving development changes. Accessible at `/wijzigingen`.
+
+### Features
+- **Status workflow**: pending → approved/needs_changes
+- **Quick actions**: One-click approve/reject buttons
+- **Feedback system**: Text + multiple screenshots per feedback item
+- **Soft delete**: Items go to "Verwijderd" tab, can be restored
+- **Multiple screenshots**: Unlimited images per change or feedback
+
+### Database Tables
+
+| Table | Purpose |
+|-------|---------|
+| `session_changes` | Development changes with status, category, screenshots |
+| `session_change_feedback` | Client feedback with text and screenshots |
+
+### API Endpoints
+
+| Method | Endpoint | Purpose |
+|--------|----------|---------|
+| GET | `/api/changes` | List all changes (filter: `?status=pending`, `?deleted=true`) |
+| POST | `/api/changes` | Create change (FormData with multiple screenshots) |
+| GET | `/api/changes/[id]` | Get single change with feedback |
+| PATCH | `/api/changes/[id]` | Update status, restore (`{restore: true}`) |
+| DELETE | `/api/changes/[id]` | Soft delete (or `?permanent=true` for hard delete) |
+| GET | `/api/changes/[id]/feedback` | List feedback for change |
+| POST | `/api/changes/[id]/feedback` | Add feedback (FormData with multiple screenshots) |
+| DELETE | `/api/changes/[id]/feedback?feedbackId=xxx` | Delete feedback |
+
+### Scripts
+
+```bash
+npm run seed:changes     # Seed from SESSION_CHANGES.html data
+```
+
+### Status Values
+- `pending` - Te beoordelen (yellow, needs client review)
+- `approved` - Goedgekeurd (green)
+- `needs_changes` - Aanpassen (red, client wants changes)
+- `in_progress` - In ontwikkeling (grey, developer WIP)
+
+### Screenshots Storage
+- Changes: `changes/{changeId}/{timestamp}-{filename}` in Vercel Blob
+- Feedback: `feedback/{changeId}/{feedbackId}/{timestamp}-{filename}` in Vercel Blob
 
 ## Media Categories
 
