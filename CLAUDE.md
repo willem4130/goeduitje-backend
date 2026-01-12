@@ -124,6 +124,40 @@ npm run seed:changes     # Seed from SESSION_CHANGES.html data
 - Changes: `changes/{changeId}/{timestamp}-{filename}` in Vercel Blob
 - Feedback: `feedback/{changeId}/{feedbackId}/{timestamp}-{filename}` in Vercel Blob
 
+## Recipes Management
+
+Full CRUD for cooking workshop recipes at `/content/recipes`.
+
+### Features
+- Title, slug, description, image URL
+- Prep time, cook time, servings, difficulty
+- Category selection (Voorgerecht, Hoofdgerecht, Bijgerecht, Dessert)
+- Ingredients list (one per line)
+- Step-by-step instructions (one per line)
+- Tips field
+- Publish/unpublish toggle
+- Image preview in edit form
+
+### API Endpoints
+
+| Method | Endpoint | Purpose |
+|--------|----------|---------|
+| GET | `/api/content/recipes` | List all recipes |
+| POST | `/api/content/recipes` | Create recipe |
+| PUT | `/api/content/recipes` | Update recipe |
+| DELETE | `/api/content/recipes?id=xxx` | Delete recipe |
+
+### Database Schema
+
+```typescript
+recipe {
+  id, title, slug, description, imageUrl,
+  prepTime, cookTime, servings, difficulty, category,
+  ingredients[], steps[], tips,
+  isPublished, createdAt, updatedAt
+}
+```
+
 ## Media Categories
 
 Backend manages all site assets via `/media` admin. Categories defined in `lib/media-categories.ts`:
