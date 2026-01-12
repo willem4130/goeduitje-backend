@@ -1,4 +1,4 @@
-import { pgTable, serial, text, timestamp, boolean, integer, jsonb, decimal } from 'drizzle-orm/pg-core'
+import { pgTable, serial, text, timestamp, boolean, integer, jsonb, decimal, varchar } from 'drizzle-orm/pg-core'
 
 // ============================================================
 // WORKSHOP REQUESTS TABLE
@@ -488,21 +488,20 @@ export const contactFeedback = pgTable('Feedback', {
 // ============================================================
 // SESSION CHANGES TABLE
 // Tracks development changes for client validation
+// Managed via backend admin at /wijzigingen
 // ============================================================
 export const sessionChanges = pgTable('session_changes', {
   id: text('id').primaryKey(),
   title: text('title').notNull(),
   description: text('description'),
-  category: text('category'), // Contact, Navigation, Content, Bug, etc.
-  filesChanged: jsonb('files_changed').$type<string[]>(),
-  changeDetails: jsonb('change_details').$type<string[]>(), // Bullet points
-  viewUrl: text('view_url'), // Link to see change live
-  status: text('status', {
-    enum: ['pending', 'approved', 'needs_changes']
-  }).default('pending').notNull(),
-  addedBy: text('added_by'), // developer or client
-  createdAt: timestamp('created_at').notNull().defaultNow(),
-  updatedAt: timestamp('updated_at').notNull().defaultNow(),
+  category: text('category'), // Contact, Navigation, Content, Design, Feature, Bug
+  filesChanged: text('filesChanged').array(), // Array of file paths (Prisma String[])
+  changeDetails: text('changeDetails').array(), // Bullet points (Prisma String[])
+  viewUrl: text('viewUrl'), // Link to see change live
+  status: text('status').default('pending').notNull(), // pending, approved, needs_changes
+  addedBy: text('addedBy').default('developer'), // developer or client
+  createdAt: timestamp('createdAt').notNull().defaultNow(),
+  updatedAt: timestamp('updatedAt').notNull(),
 })
 
 // ============================================================
@@ -511,11 +510,11 @@ export const sessionChanges = pgTable('session_changes', {
 // ============================================================
 export const sessionChangeFeedback = pgTable('session_change_feedback', {
   id: text('id').primaryKey(),
-  changeId: text('change_id').notNull(),
-  feedbackText: text('feedback_text'),
-  screenshotUrl: text('screenshot_url'), // Vercel Blob URL
-  screenshotPath: text('screenshot_path'), // Blob path for deletion
-  createdAt: timestamp('created_at').notNull().defaultNow(),
+  changeId: text('changeId').notNull(), // Foreign key to session_changes
+  feedbackText: text('feedbackText'),
+  screenshotUrl: text('screenshotUrl'), // Vercel Blob URL
+  screenshotPath: text('screenshotPath'), // Blob path for deletion
+  createdAt: timestamp('createdAt').notNull().defaultNow(),
 })
 
 // Type exports for content tables
