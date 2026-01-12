@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { db } from '@/db'
 import { sessionChanges } from '@/db/schema'
-import { eq, desc } from 'drizzle-orm'
+import { eq, asc } from 'drizzle-orm'
 import { randomUUID } from 'crypto'
 
 // GET /api/changes - Get all changes
@@ -13,10 +13,10 @@ export async function GET(request: Request) {
     let items
     if (status && status !== 'all') {
       items = await db.select().from(sessionChanges)
-        .where(eq(sessionChanges.status, status as 'pending' | 'approved' | 'needs_changes'))
-        .orderBy(desc(sessionChanges.createdAt))
+        .where(eq(sessionChanges.status, status as 'pending' | 'approved' | 'needs_changes' | 'in_progress'))
+        .orderBy(asc(sessionChanges.createdAt))
     } else {
-      items = await db.select().from(sessionChanges).orderBy(desc(sessionChanges.createdAt))
+      items = await db.select().from(sessionChanges).orderBy(asc(sessionChanges.createdAt))
     }
 
     return NextResponse.json({ items })

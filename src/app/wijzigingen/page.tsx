@@ -10,7 +10,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { Plus, ExternalLink, MessageSquare, Check, AlertCircle, Clock, Loader2, Image as ImageIcon, Trash2, Upload } from 'lucide-react'
+import { Plus, ExternalLink, MessageSquare, Check, AlertCircle, Clock, Loader2, Image as ImageIcon, Trash2, Upload, Wrench } from 'lucide-react'
 import { toast } from 'sonner'
 
 type SessionChange = {
@@ -21,7 +21,7 @@ type SessionChange = {
   filesChanged: string[] | null
   changeDetails: string[] | null
   viewUrl: string | null
-  status: 'pending' | 'approved' | 'needs_changes'
+  status: 'pending' | 'approved' | 'needs_changes' | 'in_progress'
   addedBy: string | null
   createdAt: string
 }
@@ -38,6 +38,7 @@ const statusConfig = {
   pending: { label: 'Te beoordelen', color: 'bg-yellow-100 text-yellow-800', icon: Clock },
   approved: { label: 'Goedgekeurd', color: 'bg-green-100 text-green-800', icon: Check },
   needs_changes: { label: 'Aanpassen', color: 'bg-red-100 text-red-800', icon: AlertCircle },
+  in_progress: { label: 'In ontwikkeling', color: 'bg-gray-100 text-gray-500', icon: Wrench },
 }
 
 const categories = ['Contact', 'Navigatie', 'Content', 'Design', 'Bug', 'Feature', 'Performance']
@@ -214,6 +215,7 @@ export default function WijzigingenPage() {
         <TabsList>
           <TabsTrigger value="all">Alles ({items.length})</TabsTrigger>
           <TabsTrigger value="pending">Te beoordelen</TabsTrigger>
+          <TabsTrigger value="in_progress">In ontwikkeling</TabsTrigger>
           <TabsTrigger value="approved">Goedgekeurd</TabsTrigger>
           <TabsTrigger value="needs_changes">Aanpassen</TabsTrigger>
         </TabsList>
@@ -223,16 +225,21 @@ export default function WijzigingenPage() {
       <div className="grid gap-4">
         {items.map((item) => {
           const StatusIcon = statusConfig[item.status].icon
+          const isInProgress = item.status === 'in_progress'
           return (
-            <Card key={item.id} className="hover:shadow-md transition-shadow cursor-pointer" onClick={() => openDetail(item)}>
+            <Card
+              key={item.id}
+              className={`hover:shadow-md transition-shadow cursor-pointer ${isInProgress ? 'opacity-50 bg-gray-50' : ''}`}
+              onClick={() => openDetail(item)}
+            >
               <CardHeader className="pb-2">
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
-                    <CardTitle className="text-lg">{item.title}</CardTitle>
+                    <CardTitle className={`text-lg ${isInProgress ? 'text-gray-400' : ''}`}>{item.title}</CardTitle>
                     {item.description && <CardDescription className="mt-1">{item.description}</CardDescription>}
                   </div>
                   <div className="flex gap-2 ml-4">
-                    {item.category && <Badge variant="outline">{item.category}</Badge>}
+                    {item.category && <Badge variant="outline" className={isInProgress ? 'opacity-50' : ''}>{item.category}</Badge>}
                     <Badge className={statusConfig[item.status].color}>
                       <StatusIcon className="h-3 w-3 mr-1" />
                       {statusConfig[item.status].label}
@@ -288,6 +295,7 @@ export default function WijzigingenPage() {
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="pending">Te beoordelen</SelectItem>
+                      <SelectItem value="in_progress">In ontwikkeling</SelectItem>
                       <SelectItem value="approved">Goedgekeurd</SelectItem>
                       <SelectItem value="needs_changes">Aanpassen</SelectItem>
                     </SelectContent>
