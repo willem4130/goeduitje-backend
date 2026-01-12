@@ -45,7 +45,8 @@ src/
     ├── migrate-site-assets.ts    # Migrate static files to Vercel Blob
     ├── seed-session-changes.ts   # Seed initial changes from SESSION_CHANGES.html
     ├── reset-statuses.ts         # Reset statuses (creates backup first)
-    └── restore-statuses.ts       # Restore statuses from backup
+    ├── restore-statuses.ts       # Restore statuses from backup
+    └── update-change-status.ts   # Update single item status by title
 ```
 
 ## Tech Stack
@@ -116,6 +117,26 @@ Client-facing changelog for tracking and approving development changes. Accessib
 npm run seed:changes      # Seed from SESSION_CHANGES.html data
 npm run reset:statuses    # Reset all statuses to pending (backs up first!)
 npm run restore:statuses  # Restore statuses from backup
+npm run update:change "title" "status"  # Update specific item by title
+```
+
+### Developer Workflow: Completing Features
+
+When you complete a feature that has a corresponding wijzigingen item:
+
+1. **Complete the feature** in the relevant repo (frontend or backend)
+2. **Commit and push** the changes
+3. **Update the wijzigingen status** to `pending` (Te beoordelen):
+   ```bash
+   cd goeduitje-backend
+   npm run update:change "feature title" "pending"
+   ```
+4. The item will now appear active (not greyed out) in `/wijzigingen` for client review
+
+Example:
+```bash
+npm run update:change "alle recepten" "pending"
+# Updates: "Alle recepten toevoegen" → status: pending (Te beoordelen)
 ```
 
 ### Status Values
