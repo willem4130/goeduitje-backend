@@ -10,7 +10,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { Plus, ExternalLink, MessageSquare, Check, AlertCircle, Clock, Loader2, Trash2, Upload, Wrench, ThumbsUp, ThumbsDown, Eye } from 'lucide-react'
+import { Plus, ExternalLink, MessageSquare, Check, AlertCircle, Clock, Loader2, Trash2, Upload, Wrench, ThumbsUp, ThumbsDown, Eye, Undo2 } from 'lucide-react'
 import { toast } from 'sonner'
 
 type SessionChange = {
@@ -116,7 +116,14 @@ export default function WijzigingenPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status }),
       })
-      toast.success(status === 'approved' ? '✓ Goedgekeurd!' : 'Gemarkeerd voor aanpassing')
+      // Show appropriate toast based on status change
+      if (status === 'approved') {
+        toast.success('✓ Goedgekeurd! (zie "Goedgekeurd" tab)')
+      } else if (status === 'needs_changes') {
+        toast.success('Gemarkeerd voor aanpassing (zie "Aanpassen" tab)')
+      } else if (status === 'pending') {
+        toast.success('Teruggezet naar "Te beoordelen"')
+      }
       fetchItems()
     } catch {
       toast.error('Kon status niet bijwerken')
@@ -133,7 +140,16 @@ export default function WijzigingenPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status }),
       })
-      toast.success('Status bijgewerkt')
+      // Show appropriate toast
+      if (status === 'approved') {
+        toast.success('✓ Goedgekeurd!')
+      } else if (status === 'needs_changes') {
+        toast.success('Gemarkeerd voor aanpassing')
+      } else if (status === 'pending') {
+        toast.success('Teruggezet naar "Te beoordelen"')
+      } else {
+        toast.success('Status bijgewerkt')
+      }
       setSelectedChange({ ...selectedChange, status: status as SessionChange['status'] })
       fetchItems()
     } catch {
@@ -308,30 +324,47 @@ export default function WijzigingenPage() {
                     </span>
                   </div>
 
-                  {/* Right side - quick actions for pending items */}
-                  {isPending && (
-                    <div className="flex items-center gap-2">
+                  {/* Right side - quick actions */}
+                  <div className="flex items-center gap-2">
+                    {/* Pending items: approve/reject buttons */}
+                    {isPending && (
+                      <>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="text-red-600 hover:text-red-700 hover:bg-red-50 border-red-200"
+                          onClick={(e) => quickUpdateStatus(e, item.id, 'needs_changes')}
+                          disabled={isUpdating}
+                        >
+                          {isUpdating ? <Loader2 className="h-4 w-4 animate-spin" /> : <ThumbsDown className="h-4 w-4 mr-1" />}
+                          Aanpassen
+                        </Button>
+                        <Button
+                          size="sm"
+                          className="bg-green-600 hover:bg-green-700 text-white"
+                          onClick={(e) => quickUpdateStatus(e, item.id, 'approved')}
+                          disabled={isUpdating}
+                        >
+                          {isUpdating ? <Loader2 className="h-4 w-4 animate-spin" /> : <ThumbsUp className="h-4 w-4 mr-1" />}
+                          Goedkeuren
+                        </Button>
+                      </>
+                    )}
+
+                    {/* Approved/needs_changes items: undo button */}
+                    {(item.status === 'approved' || item.status === 'needs_changes') && (
                       <Button
                         size="sm"
-                        variant="outline"
-                        className="text-red-600 hover:text-red-700 hover:bg-red-50 border-red-200"
-                        onClick={(e) => quickUpdateStatus(e, item.id, 'needs_changes')}
+                        variant="ghost"
+                        className="text-muted-foreground hover:text-foreground"
+                        onClick={(e) => quickUpdateStatus(e, item.id, 'pending')}
                         disabled={isUpdating}
                       >
-                        {isUpdating ? <Loader2 className="h-4 w-4 animate-spin" /> : <ThumbsDown className="h-4 w-4 mr-1" />}
-                        Aanpassen
+                        {isUpdating ? <Loader2 className="h-4 w-4 animate-spin" /> : <Undo2 className="h-4 w-4 mr-1" />}
+                        Ongedaan maken
                       </Button>
-                      <Button
-                        size="sm"
-                        className="bg-green-600 hover:bg-green-700 text-white"
-                        onClick={(e) => quickUpdateStatus(e, item.id, 'approved')}
-                        disabled={isUpdating}
-                      >
-                        {isUpdating ? <Loader2 className="h-4 w-4 animate-spin" /> : <ThumbsUp className="h-4 w-4 mr-1" />}
-                        Goedkeuren
-                      </Button>
-                    </div>
-                  )}
+                    )}
+                  </div>
                 </div>
               </CardContent>
             </Card>
@@ -378,6 +411,44 @@ export default function WijzigingenPage() {
                       Aanpassen nodig
                     </Button>
                   </div>
+                </div>
+              )}
+
+              {/* Undo bar for approved items */}
+              {selectedChange.status === 'approved' && (
+                <div className="mt-4 p-4 bg-green-50 border border-green-200 rounded-lg flex items-center justify-between">
+                  <div className="flex items-center gap-2 text-green-800">
+                    <Check className="h-5 w-5" />
+                    <span className="font-medium">Goedgekeurd</span>
+                  </div>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => handleStatusChange('pending')}
+                    className="text-green-700 hover:text-green-900 hover:bg-green-100"
+                  >
+                    <Undo2 className="h-4 w-4 mr-1" />
+                    Ongedaan maken
+                  </Button>
+                </div>
+              )}
+
+              {/* Undo bar for needs_changes items */}
+              {selectedChange.status === 'needs_changes' && (
+                <div className="mt-4 p-4 bg-red-50 border border-red-200 rounded-lg flex items-center justify-between">
+                  <div className="flex items-center gap-2 text-red-800">
+                    <AlertCircle className="h-5 w-5" />
+                    <span className="font-medium">Aanpassen nodig</span>
+                  </div>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => handleStatusChange('pending')}
+                    className="text-red-700 hover:text-red-900 hover:bg-red-100"
+                  >
+                    <Undo2 className="h-4 w-4 mr-1" />
+                    Ongedaan maken
+                  </Button>
                 </div>
               )}
 
