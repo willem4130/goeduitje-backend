@@ -58,8 +58,8 @@ const navSections: NavSection[] = [
     ],
   },
   {
-    title: 'Klant Communicatie',
-    id: 'client',
+    title: 'Dev Updates',
+    id: 'dev-updates',
     collapsible: false,
     items: [
       {
