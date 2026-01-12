@@ -10,7 +10,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { Plus, ExternalLink, MessageSquare, Check, AlertCircle, Clock, Loader2, Trash2, Upload, Wrench, ThumbsUp, ThumbsDown, Eye, Undo2 } from 'lucide-react'
+import { Plus, ExternalLink, MessageSquare, Check, AlertCircle, Clock, Loader2, Trash2, Upload, Wrench, ThumbsUp, ThumbsDown, Eye, Undo2, RotateCcw, Image as ImageIcon } from 'lucide-react'
 import { toast } from 'sonner'
 
 type SessionChange = {
@@ -21,8 +21,10 @@ type SessionChange = {
   filesChanged: string[] | null
   changeDetails: string[] | null
   viewUrl: string | null
+  screenshotUrl: string | null
   status: 'pending' | 'approved' | 'needs_changes' | 'in_progress'
   addedBy: string | null
+  deletedAt: string | null
   createdAt: string
 }
 
@@ -45,6 +47,7 @@ const categories = ['Contact', 'Navigatie', 'Content', 'Design', 'Bug', 'Feature
 
 export default function WijzigingenPage() {
   const [items, setItems] = useState<SessionChange[]>([])
+  const [deletedItems, setDeletedItems] = useState<SessionChange[]>([])
   const [loading, setLoading] = useState(true)
   const [activeTab, setActiveTab] = useState('all')
   const [updatingId, setUpdatingId] = useState<string | null>(null)
@@ -57,6 +60,7 @@ export default function WijzigingenPage() {
 
   // Add sheet state
   const [addOpen, setAddOpen] = useState(false)
+  const [addSubmitting, setAddSubmitting] = useState(false)
   const [formData, setFormData] = useState({
     title: '',
     description: '',
@@ -66,6 +70,7 @@ export default function WijzigingenPage() {
     changeDetails: '',
     addedBy: 'developer',
   })
+  const [addScreenshot, setAddScreenshot] = useState<File | null>(null)
 
   // Feedback form state
   const [newFeedback, setNewFeedback] = useState('')
@@ -74,10 +79,21 @@ export default function WijzigingenPage() {
 
   const fetchItems = useCallback(async () => {
     try {
-      const url = activeTab === 'all' ? '/api/changes' : `/api/changes?status=${activeTab}`
-      const res = await fetch(url)
-      const data = await res.json()
-      setItems(data.items || [])
+      if (activeTab === 'deleted') {
+        const res = await fetch('/api/changes?deleted=true')
+        const data = await res.json()
+        setDeletedItems(data.items || [])
+        setItems([])
+      } else {
+        const url = activeTab === 'all' ? '/api/changes' : `/api/changes?status=${activeTab}`
+        const res = await fetch(url)
+        const data = await res.json()
+        setItems(data.items || [])
+        // Also fetch deleted count
+        const deletedRes = await fetch('/api/changes?deleted=true')
+        const deletedData = await deletedRes.json()
+        setDeletedItems(deletedData.items || [])
+      }
     } catch {
       toast.error('Kon wijzigingen niet laden')
     } finally {
@@ -108,7 +124,7 @@ export default function WijzigingenPage() {
 
   // Quick status update (for card buttons)
   const quickUpdateStatus = async (e: React.MouseEvent, id: string, status: string) => {
-    e.stopPropagation() // Prevent card click
+    e.stopPropagation()
     setUpdatingId(id)
     try {
       await fetch(`/api/changes/${id}`, {
@@ -116,7 +132,6 @@ export default function WijzigingenPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status }),
       })
-      // Show appropriate toast based on status change
       if (status === 'approved') {
         toast.success('✓ Goedgekeurd! (zie "Goedgekeurd" tab)')
       } else if (status === 'needs_changes') {
@@ -140,7 +155,6 @@ export default function WijzigingenPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status }),
       })
-      // Show appropriate toast
       if (status === 'approved') {
         toast.success('✓ Goedgekeurd!')
       } else if (status === 'needs_changes') {
@@ -162,24 +176,34 @@ export default function WijzigingenPage() {
       toast.error('Titel is verplicht')
       return
     }
+    setAddSubmitting(true)
     try {
-      const body = {
-        ...formData,
-        filesChanged: formData.filesChanged.split('\n').filter(Boolean),
-        changeDetails: formData.changeDetails.split('\n').filter(Boolean),
+      const formDataObj = new FormData()
+      formDataObj.append('title', formData.title)
+      formDataObj.append('description', formData.description)
+      formDataObj.append('category', formData.category)
+      formDataObj.append('viewUrl', formData.viewUrl)
+      formDataObj.append('filesChanged', formData.filesChanged)
+      formDataObj.append('changeDetails', formData.changeDetails)
+      formDataObj.append('addedBy', formData.addedBy)
+      if (addScreenshot) {
+        formDataObj.append('screenshot', addScreenshot)
       }
+
       const res = await fetch('/api/changes', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body),
+        body: formDataObj,
       })
       if (!res.ok) throw new Error('Failed')
       toast.success('Wijziging toegevoegd')
       setAddOpen(false)
       setFormData({ title: '', description: '', category: '', viewUrl: '', filesChanged: '', changeDetails: '', addedBy: 'developer' })
+      setAddScreenshot(null)
       fetchItems()
     } catch {
       toast.error('Kon wijziging niet toevoegen')
+    } finally {
+      setAddSubmitting(false)
     }
   }
 
@@ -225,7 +249,7 @@ export default function WijzigingenPage() {
     if (!confirm('Deze wijziging verwijderen?')) return
     try {
       await fetch(`/api/changes/${id}`, { method: 'DELETE' })
-      toast.success('Wijziging verwijderd')
+      toast.success('Verplaatst naar prullenbak')
       setDetailOpen(false)
       fetchItems()
     } catch {
@@ -233,8 +257,41 @@ export default function WijzigingenPage() {
     }
   }
 
-  // Count pending items for header
+  const handleRestore = async (e: React.MouseEvent, id: string) => {
+    e.stopPropagation()
+    setUpdatingId(id)
+    try {
+      await fetch(`/api/changes/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ restore: true }),
+      })
+      toast.success('Wijziging hersteld')
+      fetchItems()
+    } catch {
+      toast.error('Kon niet herstellen')
+    } finally {
+      setUpdatingId(null)
+    }
+  }
+
+  const handlePermanentDelete = async (e: React.MouseEvent, id: string) => {
+    e.stopPropagation()
+    if (!confirm('Definitief verwijderen? Dit kan niet ongedaan worden gemaakt.')) return
+    setUpdatingId(id)
+    try {
+      await fetch(`/api/changes/${id}?permanent=true`, { method: 'DELETE' })
+      toast.success('Definitief verwijderd')
+      fetchItems()
+    } catch {
+      toast.error('Kon niet verwijderen')
+    } finally {
+      setUpdatingId(null)
+    }
+  }
+
   const pendingCount = items.filter(i => i.status === 'pending').length
+  const displayItems = activeTab === 'deleted' ? deletedItems : items
 
   if (loading) return <div className="flex items-center justify-center h-64"><Loader2 className="h-8 w-8 animate-spin" /></div>
 
@@ -245,7 +302,9 @@ export default function WijzigingenPage() {
         <div>
           <h1 className="text-3xl font-bold">Wijzigingen</h1>
           <p className="text-muted-foreground">
-            {pendingCount > 0 ? (
+            {activeTab === 'deleted' ? (
+              <span className="text-gray-500">Verwijderde items - herstel of verwijder definitief</span>
+            ) : pendingCount > 0 ? (
               <span className="text-yellow-600 font-medium">{pendingCount} wijziging{pendingCount !== 1 ? 'en' : ''} wacht{pendingCount === 1 ? '' : 'en'} op uw beoordeling</span>
             ) : (
               'Alle wijzigingen zijn beoordeeld'
@@ -265,34 +324,45 @@ export default function WijzigingenPage() {
           <TabsTrigger value="in_progress">In ontwikkeling</TabsTrigger>
           <TabsTrigger value="approved">Goedgekeurd</TabsTrigger>
           <TabsTrigger value="needs_changes">Aanpassen</TabsTrigger>
+          {deletedItems.length > 0 && (
+            <TabsTrigger value="deleted" className="text-muted-foreground">
+              <Trash2 className="h-3 w-3 mr-1" />Verwijderd ({deletedItems.length})
+            </TabsTrigger>
+          )}
         </TabsList>
       </Tabs>
 
       {/* Changes Grid */}
       <div className="grid gap-4">
-        {items.map((item) => {
-          const StatusIcon = statusConfig[item.status].icon
+        {displayItems.map((item) => {
+          const StatusIcon = statusConfig[item.status]?.icon || Clock
           const isInProgress = item.status === 'in_progress'
           const isPending = item.status === 'pending'
+          const isDeleted = activeTab === 'deleted'
           const isUpdating = updatingId === item.id
 
           return (
             <Card
               key={item.id}
-              className={`transition-all ${isInProgress ? 'opacity-50 bg-gray-50' : ''} ${isPending ? 'border-yellow-200 bg-yellow-50/30' : ''}`}
+              className={`transition-all ${isInProgress ? 'opacity-50 bg-gray-50' : ''} ${isPending ? 'border-yellow-200 bg-yellow-50/30' : ''} ${isDeleted ? 'opacity-60 bg-gray-50' : ''}`}
             >
               <CardHeader className="pb-2">
                 <div className="flex items-start justify-between gap-4">
-                  <div className="flex-1 cursor-pointer" onClick={() => openDetail(item)}>
-                    <CardTitle className={`text-lg ${isInProgress ? 'text-gray-400' : ''}`}>{item.title}</CardTitle>
+                  <div className="flex-1 cursor-pointer" onClick={() => !isDeleted && openDetail(item)}>
+                    <div className="flex items-center gap-2">
+                      <CardTitle className={`text-lg ${isInProgress || isDeleted ? 'text-gray-400' : ''}`}>{item.title}</CardTitle>
+                      {item.screenshotUrl && <ImageIcon className="h-4 w-4 text-muted-foreground" />}
+                    </div>
                     {item.description && <CardDescription className="mt-1">{item.description}</CardDescription>}
                   </div>
                   <div className="flex items-center gap-2">
-                    {item.category && <Badge variant="outline" className={isInProgress ? 'opacity-50' : ''}>{item.category}</Badge>}
-                    <Badge className={statusConfig[item.status].color}>
-                      <StatusIcon className="h-3 w-3 mr-1" />
-                      {statusConfig[item.status].label}
-                    </Badge>
+                    {item.category && <Badge variant="outline" className={isInProgress || isDeleted ? 'opacity-50' : ''}>{item.category}</Badge>}
+                    {!isDeleted && (
+                      <Badge className={statusConfig[item.status]?.color || 'bg-gray-100'}>
+                        <StatusIcon className="h-3 w-3 mr-1" />
+                        {statusConfig[item.status]?.label || item.status}
+                      </Badge>
+                    )}
                   </div>
                 </div>
               </CardHeader>
@@ -300,7 +370,7 @@ export default function WijzigingenPage() {
                 <div className="flex items-center justify-between">
                   {/* Left side - links */}
                   <div className="flex items-center gap-3 text-sm">
-                    {item.viewUrl && (
+                    {!isDeleted && item.viewUrl && (
                       <a
                         href={item.viewUrl}
                         target="_blank"
@@ -312,59 +382,84 @@ export default function WijzigingenPage() {
                         Bekijk live
                       </a>
                     )}
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => openDetail(item)}
-                      className={isPending ? "border-primary text-primary hover:bg-primary/10 font-medium" : ""}
-                    >
-                      <MessageSquare className="h-4 w-4 mr-1" />
-                      {isPending ? "Bekijk details eerst →" : "Details & Feedback"}
-                    </Button>
+                    {!isDeleted && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => openDetail(item)}
+                        className={isPending ? "border-primary text-primary hover:bg-primary/10 font-medium" : ""}
+                      >
+                        <MessageSquare className="h-4 w-4 mr-1" />
+                        {isPending ? "Bekijk details eerst →" : "Details & Feedback"}
+                      </Button>
+                    )}
                     <span className="text-xs text-muted-foreground">
                       {new Date(item.createdAt).toLocaleDateString('nl-NL')}
                     </span>
                   </div>
 
-                  {/* Right side - quick actions */}
+                  {/* Right side - actions */}
                   <div className="flex items-center gap-2">
-                    {/* Pending items: approve/reject buttons */}
-                    {isPending && (
+                    {isDeleted ? (
                       <>
                         <Button
                           size="sm"
                           variant="outline"
-                          className="text-red-600 hover:text-red-700 hover:bg-red-50 border-red-200"
-                          onClick={(e) => quickUpdateStatus(e, item.id, 'needs_changes')}
+                          onClick={(e) => handleRestore(e, item.id)}
                           disabled={isUpdating}
                         >
-                          {isUpdating ? <Loader2 className="h-4 w-4 animate-spin" /> : <ThumbsDown className="h-4 w-4 mr-1" />}
-                          Aanpassen
+                          {isUpdating ? <Loader2 className="h-4 w-4 animate-spin" /> : <RotateCcw className="h-4 w-4 mr-1" />}
+                          Herstellen
                         </Button>
                         <Button
                           size="sm"
-                          className="bg-green-600 hover:bg-green-700 text-white"
-                          onClick={(e) => quickUpdateStatus(e, item.id, 'approved')}
+                          variant="destructive"
+                          onClick={(e) => handlePermanentDelete(e, item.id)}
                           disabled={isUpdating}
                         >
-                          {isUpdating ? <Loader2 className="h-4 w-4 animate-spin" /> : <ThumbsUp className="h-4 w-4 mr-1" />}
-                          Goedkeuren
+                          <Trash2 className="h-4 w-4 mr-1" />
+                          Definitief
                         </Button>
                       </>
-                    )}
+                    ) : (
+                      <>
+                        {isPending && (
+                          <>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="text-red-600 hover:text-red-700 hover:bg-red-50 border-red-200"
+                              onClick={(e) => quickUpdateStatus(e, item.id, 'needs_changes')}
+                              disabled={isUpdating}
+                            >
+                              {isUpdating ? <Loader2 className="h-4 w-4 animate-spin" /> : <ThumbsDown className="h-4 w-4 mr-1" />}
+                              Aanpassen
+                            </Button>
+                            <Button
+                              size="sm"
+                              className="bg-green-600 hover:bg-green-700 text-white"
+                              onClick={(e) => quickUpdateStatus(e, item.id, 'approved')}
+                              disabled={isUpdating}
+                            >
+                              {isUpdating ? <Loader2 className="h-4 w-4 animate-spin" /> : <ThumbsUp className="h-4 w-4 mr-1" />}
+                              Goedkeuren
+                            </Button>
+                          </>
+                        )}
 
-                    {/* Approved/needs_changes items: undo button */}
-                    {(item.status === 'approved' || item.status === 'needs_changes') && (
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        className="text-muted-foreground hover:text-foreground"
-                        onClick={(e) => quickUpdateStatus(e, item.id, 'pending')}
-                        disabled={isUpdating}
-                      >
-                        {isUpdating ? <Loader2 className="h-4 w-4 animate-spin" /> : <Undo2 className="h-4 w-4 mr-1" />}
-                        Ongedaan maken
-                      </Button>
+                        {(item.status === 'approved' || item.status === 'needs_changes') && (
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            className="text-muted-foreground hover:text-foreground"
+                            onClick={(e) => quickUpdateStatus(e, item.id, 'pending')}
+                            disabled={isUpdating}
+                          >
+                            {isUpdating ? <Loader2 className="h-4 w-4 animate-spin" /> : <Undo2 className="h-4 w-4 mr-1" />}
+                            Ongedaan maken
+                          </Button>
+                        )}
+                      </>
                     )}
                   </div>
                 </div>
@@ -372,12 +467,21 @@ export default function WijzigingenPage() {
             </Card>
           )
         })}
-        {items.length === 0 && (
+        {displayItems.length === 0 && (
           <Card className="py-12">
             <CardContent className="text-center text-muted-foreground">
-              <Check className="h-12 w-12 mx-auto mb-4 text-green-500" />
-              <p className="text-lg font-medium">Geen wijzigingen gevonden</p>
-              <p className="text-sm mt-1">Alle wijzigingen in deze categorie zijn afgehandeld</p>
+              {activeTab === 'deleted' ? (
+                <>
+                  <Trash2 className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                  <p className="text-lg font-medium">Prullenbak is leeg</p>
+                </>
+              ) : (
+                <>
+                  <Check className="h-12 w-12 mx-auto mb-4 text-green-500" />
+                  <p className="text-lg font-medium">Geen wijzigingen gevonden</p>
+                  <p className="text-sm mt-1">Alle wijzigingen in deze categorie zijn afgehandeld</p>
+                </>
+              )}
             </CardContent>
           </Card>
         )}
@@ -470,6 +574,16 @@ export default function WijzigingenPage() {
                     </SelectContent>
                   </Select>
                 </div>
+
+                {/* Screenshot */}
+                {selectedChange.screenshotUrl && (
+                  <div>
+                    <Label>Screenshot</Label>
+                    <a href={selectedChange.screenshotUrl} target="_blank" rel="noopener noreferrer" className="mt-2 block">
+                      <img src={selectedChange.screenshotUrl} alt="Screenshot" className="max-h-48 rounded border hover:opacity-90" />
+                    </a>
+                  </div>
+                )}
 
                 {/* View URL - Prominent */}
                 {selectedChange.viewUrl && (
@@ -619,6 +733,24 @@ export default function WijzigingenPage() {
               </Select>
             </div>
             <div>
+              <Label>Screenshot / Afbeelding</Label>
+              <div className="mt-1">
+                <label className="flex items-center gap-2 cursor-pointer text-sm text-muted-foreground hover:text-foreground border rounded-md px-3 py-2 w-full">
+                  <input
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={(e) => setAddScreenshot(e.target.files?.[0] || null)}
+                  />
+                  <Upload className="h-4 w-4" />
+                  {addScreenshot ? addScreenshot.name : 'Afbeelding toevoegen'}
+                </label>
+                {addScreenshot && (
+                  <Button variant="ghost" size="sm" onClick={() => setAddScreenshot(null)} className="mt-1">Verwijderen</Button>
+                )}
+              </div>
+            </div>
+            <div>
               <Label>Link naar wijziging</Label>
               <Input value={formData.viewUrl} onChange={(e) => setFormData({...formData, viewUrl: e.target.value})} placeholder="https://goeduitje-nl-rebuild.vercel.app/..." />
             </div>
@@ -640,7 +772,10 @@ export default function WijzigingenPage() {
                 </SelectContent>
               </Select>
             </div>
-            <Button onClick={handleAddSubmit} className="w-full">Wijziging toevoegen</Button>
+            <Button onClick={handleAddSubmit} disabled={addSubmitting} className="w-full">
+              {addSubmitting ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Plus className="h-4 w-4 mr-2" />}
+              Wijziging toevoegen
+            </Button>
           </div>
         </SheetContent>
       </Sheet>

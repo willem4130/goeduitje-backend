@@ -1,7 +1,8 @@
 import { NextResponse } from 'next/server'
+import { put } from '@vercel/blob'
 import { db } from '@/db'
 import { sessionChanges } from '@/db/schema'
-import { eq, asc } from 'drizzle-orm'
+import { eq, asc, isNull, isNotNull } from 'drizzle-orm'
 import { randomUUID } from 'crypto'
 
 // GET /api/changes - Get all changes
@@ -9,14 +10,26 @@ export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url)
     const status = searchParams.get('status')
+    const showDeleted = searchParams.get('deleted') === 'true'
 
     let items
-    if (status && status !== 'all') {
+    if (showDeleted) {
+      // Show only deleted items
+      items = await db.select().from(sessionChanges)
+        .where(isNotNull(sessionChanges.deletedAt))
+        .orderBy(asc(sessionChanges.createdAt))
+    } else if (status && status !== 'all') {
+      // Filter by status, exclude deleted
       items = await db.select().from(sessionChanges)
         .where(eq(sessionChanges.status, status as 'pending' | 'approved' | 'needs_changes' | 'in_progress'))
         .orderBy(asc(sessionChanges.createdAt))
+      // Filter out deleted items in JS (drizzle doesn't support AND easily)
+      items = items.filter(i => !i.deletedAt)
     } else {
-      items = await db.select().from(sessionChanges).orderBy(asc(sessionChanges.createdAt))
+      // All non-deleted items
+      items = await db.select().from(sessionChanges)
+        .where(isNull(sessionChanges.deletedAt))
+        .orderBy(asc(sessionChanges.createdAt))
     }
 
     return NextResponse.json({ items })
@@ -26,22 +39,80 @@ export async function GET(request: Request) {
   }
 }
 
-// POST /api/changes - Create new change
+// POST /api/changes - Create new change (supports FormData with screenshot)
 export async function POST(request: Request) {
   try {
-    const body = await request.json()
+    const contentType = request.headers.get('content-type') || ''
+
+    let title: string
+    let description: string | null = null
+    let category: string | null = null
+    let viewUrl: string | null = null
+    let filesChanged: string[] = []
+    let changeDetails: string[] = []
+    let addedBy: string = 'developer'
+    let screenshotUrl: string | null = null
+    let screenshotPath: string | null = null
+
+    if (contentType.includes('multipart/form-data')) {
+      // Handle FormData with potential file upload
+      const formData = await request.formData()
+
+      title = formData.get('title') as string
+      description = formData.get('description') as string | null
+      category = formData.get('category') as string | null
+      viewUrl = formData.get('viewUrl') as string | null
+      addedBy = (formData.get('addedBy') as string) || 'developer'
+
+      const filesChangedStr = formData.get('filesChanged') as string | null
+      const changeDetailsStr = formData.get('changeDetails') as string | null
+      filesChanged = filesChangedStr ? filesChangedStr.split('\n').filter(Boolean) : []
+      changeDetails = changeDetailsStr ? changeDetailsStr.split('\n').filter(Boolean) : []
+
+      // Handle screenshot upload
+      const file = formData.get('screenshot') as File | null
+      if (file && file.size > 0) {
+        if (!file.type.startsWith('image/')) {
+          return NextResponse.json({ error: 'Only image files are allowed' }, { status: 400 })
+        }
+
+        const id = randomUUID()
+        const blobPath = `changes/${id}/${Date.now()}-${file.name}`
+        const blob = await put(blobPath, file, { access: 'public' })
+        screenshotUrl = blob.url
+        screenshotPath = blobPath
+      }
+    } else {
+      // Handle JSON body
+      const body = await request.json()
+      title = body.title
+      description = body.description
+      category = body.category
+      viewUrl = body.viewUrl
+      filesChanged = body.filesChanged || []
+      changeDetails = body.changeDetails || []
+      addedBy = body.addedBy || 'developer'
+    }
+
+    if (!title) {
+      return NextResponse.json({ error: 'Title is required' }, { status: 400 })
+    }
+
     const newItem = await db.insert(sessionChanges).values({
       id: randomUUID(),
-      title: body.title,
-      description: body.description,
-      category: body.category,
-      filesChanged: body.filesChanged || [],
-      changeDetails: body.changeDetails || [],
-      viewUrl: body.viewUrl,
-      status: body.status || 'pending',
-      addedBy: body.addedBy || 'developer',
+      title,
+      description,
+      category,
+      filesChanged,
+      changeDetails,
+      viewUrl,
+      screenshotUrl,
+      screenshotPath,
+      status: 'pending',
+      addedBy,
       updatedAt: new Date(),
     }).returning()
+
     return NextResponse.json({ item: newItem[0] }, { status: 201 })
   } catch (error) {
     console.error('Failed to create change:', error)

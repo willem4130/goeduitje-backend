@@ -498,8 +498,11 @@ export const sessionChanges = pgTable('session_changes', {
   filesChanged: text('filesChanged').array(), // Array of file paths (Prisma String[])
   changeDetails: text('changeDetails').array(), // Bullet points (Prisma String[])
   viewUrl: text('viewUrl'), // Link to see change live
-  status: text('status').default('pending').notNull(), // pending, approved, needs_changes
+  screenshotUrl: text('screenshotUrl'), // Screenshot/image URL (Vercel Blob)
+  screenshotPath: text('screenshotPath'), // Blob path for deletion
+  status: text('status').default('pending').notNull(), // pending, approved, needs_changes, in_progress
   addedBy: text('addedBy').default('developer'), // developer or client
+  deletedAt: timestamp('deletedAt'), // Soft delete timestamp
   createdAt: timestamp('createdAt').notNull().defaultNow(),
   updatedAt: timestamp('updatedAt').notNull(),
 })
