@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { del } from '@vercel/blob'
 import { db } from '@/db'
-import { sessionChanges, sessionChangeFeedback } from '@/db/schema'
+import { sessionChanges, sessionChangeFeedback, sessionChangeStatusHistory } from '@/db/schema'
 import { eq } from 'drizzle-orm'
+import { randomUUID } from 'crypto'
 
 // GET /api/changes/[id] - Get single change with feedback
 export async function GET(
@@ -54,6 +55,9 @@ export async function PATCH(
       return NextResponse.json({ item: updated[0], restored: true })
     }
 
+    // Get current change to check if status is changing
+    const [currentChange] = await db.select().from(sessionChanges).where(eq(sessionChanges.id, id))
+
     // Regular update
     const updated = await db.update(sessionChanges)
       .set({
@@ -65,6 +69,17 @@ export async function PATCH(
 
     if (!updated.length) {
       return NextResponse.json({ error: 'Change not found' }, { status: 404 })
+    }
+
+    // Log status change to history if status changed
+    if (body.status && currentChange && body.status !== currentChange.status) {
+      await db.insert(sessionChangeStatusHistory).values({
+        id: randomUUID(),
+        changeId: id,
+        status: body.status,
+        changedBy: 'client', // Status changes from UI are from client
+        note: null,
+      })
     }
 
     return NextResponse.json({ item: updated[0] })

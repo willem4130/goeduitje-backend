@@ -10,6 +10,8 @@
     "migrate:media": "node --env-file=.env.local --import tsx/esm scripts/migrate-media.ts",
     "migrate:assets": "node --env-file=.env.local --import tsx/esm scripts/migrate-site-assets.ts",
     "seed:changes": "node --env-file=.env.local --import tsx/esm scripts/seed-session-changes.ts",
+    "reset:statuses": "node --env-file=.env.local --import tsx/esm scripts/reset-statuses.ts",
+    "restore:statuses": "node --env-file=.env.local --import tsx/esm scripts/restore-statuses.ts",
     "update:shows": "node --env-file=.env.local --import tsx/esm scripts/update-past-shows.ts",
     "lint": "cross-env NODE_OPTIONS=--no-deprecation next lint",
     "type-check": "tsc --noEmit",

@@ -520,6 +520,23 @@ export const sessionChangeFeedback = pgTable('session_change_feedback', {
   createdAt: timestamp('createdAt').notNull().defaultNow(),
 })
 
+// ============================================================
+// SESSION CHANGE STATUS HISTORY TABLE
+// Backup of all status changes for restore capability
+// ============================================================
+export const sessionChangeStatusHistory = pgTable('session_change_status_history', {
+  id: text('id').primaryKey(),
+  changeId: text('changeId').notNull(), // Foreign key to session_changes
+  status: text('status').notNull(), // The status that was set
+  changedBy: text('changedBy'), // Who made the change (client, developer, system)
+  note: text('note'), // Optional note about the change
+  createdAt: timestamp('createdAt').notNull().defaultNow(),
+})
+
+// Type exports for status history
+export type SessionChangeStatusHistory = typeof sessionChangeStatusHistory.$inferSelect
+export type NewSessionChangeStatusHistory = typeof sessionChangeStatusHistory.$inferInsert
+
 // Type exports for content tables
 export type FAQ = typeof faq.$inferSelect
 export type NewFAQ = typeof faq.$inferInsert
