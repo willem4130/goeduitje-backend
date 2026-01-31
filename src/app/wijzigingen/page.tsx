@@ -51,6 +51,13 @@ export default function WijzigingenPage() {
   const [deletedItems, setDeletedItems] = useState<SessionChange[]>([])
   const [loading, setLoading] = useState(true)
   const [activeTab, setActiveTab] = useState('all')
+
+  // Redirect fixed_review tab to pending (fixed_review is now part of pending tab)
+  useEffect(() => {
+    if (activeTab === 'fixed_review') {
+      setActiveTab('pending')
+    }
+  }, [activeTab])
   const [updatingId, setUpdatingId] = useState<string | null>(null)
 
   // Detail sheet state
