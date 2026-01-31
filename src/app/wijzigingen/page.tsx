@@ -22,7 +22,7 @@ type SessionChange = {
   changeDetails: string[] | null
   viewUrl: string | null
   screenshotUrls: string[] | null
-  status: 'pending' | 'approved' | 'needs_changes' | 'in_progress'
+  status: 'pending' | 'approved' | 'needs_changes' | 'in_progress' | 'fixed_review'
   addedBy: string | null
   deletedAt: string | null
   createdAt: string
@@ -41,6 +41,7 @@ const statusConfig = {
   approved: { label: 'Goedgekeurd', color: 'bg-green-100 text-green-800 border-green-200', icon: Check },
   needs_changes: { label: 'Aanpassen', color: 'bg-red-100 text-red-800 border-red-200', icon: AlertCircle },
   in_progress: { label: 'In ontwikkeling', color: 'bg-gray-100 text-gray-500 border-gray-200', icon: Wrench },
+  fixed_review: { label: 'Aangepast & opnieuw beoordelen', color: 'bg-blue-100 text-blue-800 border-blue-200', icon: RotateCcw },
 }
 
 const categories = ['Contact', 'Navigatie', 'Content', 'Design', 'Bug', 'Feature', 'Performance']
@@ -328,6 +329,9 @@ export default function WijzigingenPage() {
           <TabsTrigger value="in_progress">In ontwikkeling</TabsTrigger>
           <TabsTrigger value="approved">Goedgekeurd</TabsTrigger>
           <TabsTrigger value="needs_changes">Aanpassen</TabsTrigger>
+          <TabsTrigger value="fixed_review" className="data-[state=active]:bg-blue-100">
+            Aangepast
+          </TabsTrigger>
           {deletedItems.length > 0 && (
             <TabsTrigger value="deleted" className="text-muted-foreground">
               <Trash2 className="h-3 w-3 mr-1" />Verwijderd ({deletedItems.length})
@@ -575,6 +579,7 @@ export default function WijzigingenPage() {
                       <SelectItem value="in_progress">In ontwikkeling</SelectItem>
                       <SelectItem value="approved">Goedgekeurd</SelectItem>
                       <SelectItem value="needs_changes">Aanpassen</SelectItem>
+                      <SelectItem value="fixed_review">Aangepast & opnieuw beoordelen</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>

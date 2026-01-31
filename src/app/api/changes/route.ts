@@ -21,7 +21,7 @@ export async function GET(request: Request) {
     } else if (status && status !== 'all') {
       // Filter by status, exclude deleted
       items = await db.select().from(sessionChanges)
-        .where(eq(sessionChanges.status, status as 'pending' | 'approved' | 'needs_changes' | 'in_progress'))
+        .where(eq(sessionChanges.status, status as 'pending' | 'approved' | 'needs_changes' | 'in_progress' | 'fixed_review'))
         .orderBy(asc(sessionChanges.createdAt))
       // Filter out deleted items in JS (drizzle doesn't support AND easily)
       items = items.filter(i => !i.deletedAt)
