@@ -86,7 +86,12 @@ export default function WijzigingenPage() {
         setDeletedItems(data.items || [])
         setItems([])
       } else {
-        const url = activeTab === 'all' ? '/api/changes' : `/api/changes?status=${activeTab}`
+        // "pending" tab shows both pending AND fixed_review items
+        const url = activeTab === 'all'
+          ? '/api/changes'
+          : activeTab === 'pending'
+            ? '/api/changes?status=pending&status=fixed_review'
+            : `/api/changes?status=${activeTab}`
         const res = await fetch(url)
         const data = await res.json()
         setItems(data.items || [])
@@ -296,6 +301,8 @@ export default function WijzigingenPage() {
   }
 
   const pendingCount = items.filter(i => i.status === 'pending').length
+  const fixedReviewCount = items.filter(i => i.status === 'fixed_review').length
+  const toReviewCount = pendingCount + fixedReviewCount
   const displayItems = activeTab === 'deleted' ? deletedItems : items
 
   if (loading) return <div className="flex items-center justify-center h-64"><Loader2 className="h-8 w-8 animate-spin" /></div>
@@ -309,8 +316,11 @@ export default function WijzigingenPage() {
           <p className="text-muted-foreground">
             {activeTab === 'deleted' ? (
               <span className="text-gray-500">Verwijderde items - herstel of verwijder definitief</span>
-            ) : pendingCount > 0 ? (
-              <span className="text-yellow-600 font-medium">{pendingCount} wijziging{pendingCount !== 1 ? 'en' : ''} wacht{pendingCount === 1 ? '' : 'en'} op uw beoordeling</span>
+            ) : toReviewCount > 0 ? (
+              <span className="text-yellow-600 font-medium">
+                {toReviewCount} wijziging{toReviewCount !== 1 ? 'en' : ''} wacht{toReviewCount === 1 ? '' : 'en'} op uw beoordeling
+                {fixedReviewCount > 0 && <span className="text-blue-600"> ({fixedReviewCount} aangepast)</span>}
+              </span>
             ) : (
               'Alle wijzigingen zijn beoordeeld'
             )}
@@ -324,14 +334,11 @@ export default function WijzigingenPage() {
         <TabsList>
           <TabsTrigger value="all">Alles ({items.length})</TabsTrigger>
           <TabsTrigger value="pending" className="data-[state=active]:bg-yellow-100">
-            Te beoordelen {pendingCount > 0 && <Badge className="ml-2 bg-yellow-500">{pendingCount}</Badge>}
+            Te beoordelen {toReviewCount > 0 && <Badge className="ml-2 bg-yellow-500">{toReviewCount}</Badge>}
           </TabsTrigger>
           <TabsTrigger value="in_progress">In ontwikkeling</TabsTrigger>
           <TabsTrigger value="approved">Goedgekeurd</TabsTrigger>
           <TabsTrigger value="needs_changes">Aanpassen</TabsTrigger>
-          <TabsTrigger value="fixed_review" className="data-[state=active]:bg-blue-100">
-            Aangepast
-          </TabsTrigger>
           {deletedItems.length > 0 && (
             <TabsTrigger value="deleted" className="text-muted-foreground">
               <Trash2 className="h-3 w-3 mr-1" />Verwijderd ({deletedItems.length})
@@ -346,13 +353,15 @@ export default function WijzigingenPage() {
           const StatusIcon = statusConfig[item.status]?.icon || Clock
           const isInProgress = item.status === 'in_progress'
           const isPending = item.status === 'pending'
+          const isFixedReview = item.status === 'fixed_review'
+          const needsReview = isPending || isFixedReview
           const isDeleted = activeTab === 'deleted'
           const isUpdating = updatingId === item.id
 
           return (
             <Card
               key={item.id}
-              className={`transition-all ${isInProgress ? 'opacity-50 bg-gray-50' : ''} ${isPending ? 'border-yellow-200 bg-yellow-50/30' : ''} ${isDeleted ? 'opacity-60 bg-gray-50' : ''}`}
+              className={`transition-all ${isInProgress ? 'opacity-50 bg-gray-50' : ''} ${isPending ? 'border-yellow-200 bg-yellow-50/30' : ''} ${isFixedReview ? 'border-blue-200 bg-blue-50/30' : ''} ${isDeleted ? 'opacity-60 bg-gray-50' : ''}`}
             >
               <CardHeader className="pb-2">
                 <div className="flex items-start justify-between gap-4">
@@ -395,10 +404,10 @@ export default function WijzigingenPage() {
                         variant="outline"
                         size="sm"
                         onClick={() => openDetail(item)}
-                        className={isPending ? "border-primary text-primary hover:bg-primary/10 font-medium" : ""}
+                        className={needsReview ? "border-primary text-primary hover:bg-primary/10 font-medium" : ""}
                       >
                         <MessageSquare className="h-4 w-4 mr-1" />
-                        {isPending ? "Bekijk details eerst →" : "Details & Feedback"}
+                        {needsReview ? "Bekijk details eerst →" : "Details & Feedback"}
                       </Button>
                     )}
                     <span className="text-xs text-muted-foreground">
@@ -431,7 +440,7 @@ export default function WijzigingenPage() {
                       </>
                     ) : (
                       <>
-                        {isPending && (
+                        {needsReview && (
                           <>
                             <Button
                               size="sm"
@@ -523,6 +532,33 @@ export default function WijzigingenPage() {
                     >
                       <ThumbsDown className="h-4 w-4 mr-2" />
                       Aanpassen nodig
+                    </Button>
+                  </div>
+                </div>
+              )}
+
+              {/* Quick Action Bar for fixed_review items (re-review after developer fix) */}
+              {selectedChange.status === 'fixed_review' && (
+                <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                  <div className="flex items-center gap-2 text-blue-800 mb-3">
+                    <RotateCcw className="h-4 w-4" />
+                    <p className="text-sm font-medium">Aangepast door developer - opnieuw beoordelen:</p>
+                  </div>
+                  <div className="flex gap-2">
+                    <Button
+                      className="flex-1 bg-green-600 hover:bg-green-700"
+                      onClick={() => handleStatusChange('approved')}
+                    >
+                      <ThumbsUp className="h-4 w-4 mr-2" />
+                      Goedkeuren
+                    </Button>
+                    <Button
+                      variant="outline"
+                      className="flex-1 border-red-200 text-red-600 hover:bg-red-50"
+                      onClick={() => handleStatusChange('needs_changes')}
+                    >
+                      <ThumbsDown className="h-4 w-4 mr-2" />
+                      Nog aanpassen
                     </Button>
                   </div>
                 </div>

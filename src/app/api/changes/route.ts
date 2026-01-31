@@ -2,14 +2,14 @@ import { NextResponse } from 'next/server'
 import { put } from '@vercel/blob'
 import { db } from '@/db'
 import { sessionChanges } from '@/db/schema'
-import { eq, asc, isNull, isNotNull } from 'drizzle-orm'
+import { eq, asc, isNull, isNotNull, inArray } from 'drizzle-orm'
 import { randomUUID } from 'crypto'
 
 // GET /api/changes - Get all changes
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url)
-    const status = searchParams.get('status')
+    const statusValues = searchParams.getAll('status') // Support multiple status values
     const showDeleted = searchParams.get('deleted') === 'true'
 
     let items
@@ -18,10 +18,10 @@ export async function GET(request: Request) {
       items = await db.select().from(sessionChanges)
         .where(isNotNull(sessionChanges.deletedAt))
         .orderBy(asc(sessionChanges.createdAt))
-    } else if (status && status !== 'all') {
-      // Filter by status, exclude deleted
+    } else if (statusValues.length > 0 && !statusValues.includes('all')) {
+      // Filter by status(es), exclude deleted
       items = await db.select().from(sessionChanges)
-        .where(eq(sessionChanges.status, status as 'pending' | 'approved' | 'needs_changes' | 'in_progress' | 'fixed_review'))
+        .where(inArray(sessionChanges.status, statusValues as ('pending' | 'approved' | 'needs_changes' | 'in_progress' | 'fixed_review')[]))
         .orderBy(asc(sessionChanges.createdAt))
       // Filter out deleted items in JS (drizzle doesn't support AND easily)
       items = items.filter(i => !i.deletedAt)
