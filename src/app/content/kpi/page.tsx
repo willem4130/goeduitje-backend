@@ -13,7 +13,6 @@ type SiteStats = {
   companiesCount: string
   activitiesCount: string
   teamsCount: string
-  socialParticipantsCount: string
   heroActivitiesCount: string
   heroParticipantsCount: string
   uspBadges: string
@@ -23,7 +22,6 @@ const DEFAULT_STATS: SiteStats = {
   companiesCount: '80+',
   activitiesCount: '200+',
   teamsCount: '150+',
-  socialParticipantsCount: '500+',
   heroActivitiesCount: '41',
   heroParticipantsCount: '516',
   uspBadges: 'Maak sociale impact,Op locatie naar keuze,Op maat'
@@ -209,16 +207,10 @@ export default function KPIPage() {
                   />
                   <p className="text-xs text-muted-foreground mt-1">Getoond als &quot;150+ Teams&quot;</p>
                 </div>
-                <div>
-                  <Label>Aantal Deelnemers</Label>
-                  <Input
-                    value={stats.socialParticipantsCount}
-                    onChange={e => setStats({...stats, socialParticipantsCount: e.target.value})}
-                    placeholder="500+"
-                  />
-                  <p className="text-xs text-muted-foreground mt-1">Getoond als &quot;500+ Deelnemers&quot;</p>
-                </div>
               </div>
+              <p className="text-xs text-muted-foreground mt-3">
+                Deelnemers wordt overgenomen uit de Hero Video KPIs hieronder.
+              </p>
             </CardContent>
           </Card>
 
