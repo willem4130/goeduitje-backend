@@ -11,7 +11,8 @@ const DEFAULT_STATS = {
   activitiesCount: '200+',
   // Homepage social proof stats
   teamsCount: '150+',
-  rebookRate: '95%',
+  // Homepage social proof - participants count
+  socialParticipantsCount: '500+',
   // Hero video KPI stats
   heroActivitiesCount: '41',
   heroParticipantsCount: '516',
