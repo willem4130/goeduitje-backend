@@ -539,21 +539,37 @@ export const sessionChangeStatusHistory = pgTable('session_change_status_history
 // ============================================================
 export const booking = pgTable('Booking', {
   id: text('id').primaryKey(),
-  workshopId: text('workshopId').notNull(),
-  workshopDate: text('workshopDate').notNull(),
+  stripeSessionId: text('stripeSessionId').unique(),
+  stripePaymentId: text('stripePaymentId'),
+
+  // Customer info
   firstName: text('firstName').notNull(),
   lastName: text('lastName').notNull(),
   email: text('email').notNull(),
   numberOfPeople: integer('numberOfPeople').notNull(),
-  dietaryRequirement: text('dietaryRequirement').default('geen').notNull(),
+
+  // Workshop info
+  workshopId: text('workshopId'),
+  workshopDate: text('workshopDate'),
+
+  // Dietary
+  dietaryRequirement: text('dietaryRequirement'),
   allergies: text('allergies'),
-  totalPrice: decimal('totalPrice', { precision: 10, scale: 2 }).notNull(),
-  paymentMethod: text('paymentMethod').notNull(), // gift_card, stripe, gift_card_partial
-  paymentStatus: text('paymentStatus').default('pending').notNull(), // pending, paid, failed
+
+  // Gift card
+  hasGiftCard: boolean('hasGiftCard').default(false).notNull(),
   giftCardId: text('giftCardId'),
   giftCardValue: decimal('giftCardValue', { precision: 10, scale: 2 }),
-  remainingAmount: decimal('remainingAmount', { precision: 10, scale: 2 }),
-  stripeSessionId: text('stripeSessionId'),
+
+  // Payment
+  totalPrice: decimal('totalPrice', { precision: 10, scale: 2 }).notNull(),
+  remainingAmount: decimal('remainingAmount', { precision: 10, scale: 2 }).notNull(),
+  amountPaid: decimal('amountPaid', { precision: 10, scale: 2 }),
+  currency: text('currency').default('eur').notNull(),
+  paymentMethod: text('paymentMethod'),
+  paymentStatus: text('paymentStatus').default('pending').notNull(),
+
+  // Metadata
   createdAt: timestamp('createdAt').notNull().defaultNow(),
   updatedAt: timestamp('updatedAt').notNull(),
 })
@@ -601,3 +617,28 @@ export type NewSessionChange = typeof sessionChanges.$inferInsert
 
 export type SessionChangeFeedback = typeof sessionChangeFeedback.$inferSelect
 export type NewSessionChangeFeedback = typeof sessionChangeFeedback.$inferInsert
+
+// ============================================================
+// WORKSHOP CONFIG TABLE
+// Workshop configurator submissions from the frontend
+// Managed by frontend's Prisma, read by backend via Drizzle
+// ============================================================
+export const workshopConfig = pgTable('WorkshopConfig', {
+  id: text('id').primaryKey(),
+  type: text('type').notNull(),
+  participantCount: integer('participantCount').notNull(),
+  workshops: text('workshops').array(),
+  location: text('location').notNull(),
+  customCity: text('customCity'),
+  date: text('date'),
+  time: text('time'),
+  duration: decimal('duration', { precision: 10, scale: 2 }),
+  name: text('name').notNull(),
+  email: text('email').notNull(),
+  phone: text('phone'),
+  createdAt: timestamp('createdAt').notNull().defaultNow(),
+  updatedAt: timestamp('updatedAt').notNull(),
+})
+
+export type WorkshopConfigRecord = typeof workshopConfig.$inferSelect
+export type NewWorkshopConfig = typeof workshopConfig.$inferInsert

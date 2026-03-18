@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { db } from '@/db'
-import { workshopRequests, confirmedWorkshops, mediaGallery } from '@/db/schema'
+import { workshopRequests, confirmedWorkshops, mediaGallery, workshopConfig } from '@/db/schema'
 import { count, sql, eq } from 'drizzle-orm'
 
 // Helper to safely query a table that might not exist
@@ -16,13 +16,14 @@ async function safeCount(queryFn: () => Promise<{ count: number }[]>): Promise<n
 export async function GET() {
   try {
     // Get stats with fallbacks if tables don't exist
-    const [pendingRequests, quotesSent, confirmedCount, mediaItems] = await Promise.all([
+    const [pendingRequests, quotesSent, confirmedCount, mediaItems, configCount] = await Promise.all([
       safeCount(() => db.select({ count: count() }).from(workshopRequests)
         .where(sql`${workshopRequests.status} IN ('leeg', 'informatie verstrekt')`)),
       safeCount(() => db.select({ count: count() }).from(workshopRequests)
         .where(eq(workshopRequests.status, 'offerte gemaakt'))),
       safeCount(() => db.select({ count: count() }).from(confirmedWorkshops)),
       safeCount(() => db.select({ count: count() }).from(mediaGallery)),
+      safeCount(() => db.select({ count: count() }).from(workshopConfig)),
     ])
 
     // Get recent workshop requests (last 5) - handle if table doesn't exist
@@ -62,6 +63,7 @@ export async function GET() {
         quotesSent,
         confirmedWorkshops: confirmedCount,
         mediaItems,
+        workshopConfigs: configCount,
       },
       recentRequests,
       requestsByStatus,
@@ -75,6 +77,7 @@ export async function GET() {
         quotesSent: 0,
         confirmedWorkshops: 0,
         mediaItems: 0,
+        workshopConfigs: 0,
       },
       recentRequests: [],
       requestsByStatus: {},
