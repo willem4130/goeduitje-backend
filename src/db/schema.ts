@@ -533,6 +533,34 @@ export const sessionChangeStatusHistory = pgTable('session_change_status_history
   createdAt: timestamp('createdAt').notNull().defaultNow(),
 })
 
+// ============================================================
+// BOOKINGS TABLE
+// Open workshop bookings from the frontend
+// ============================================================
+export const booking = pgTable('Booking', {
+  id: text('id').primaryKey(),
+  workshopId: text('workshopId').notNull(),
+  workshopDate: text('workshopDate').notNull(),
+  firstName: text('firstName').notNull(),
+  lastName: text('lastName').notNull(),
+  email: text('email').notNull(),
+  numberOfPeople: integer('numberOfPeople').notNull(),
+  dietaryRequirement: text('dietaryRequirement').default('geen').notNull(),
+  allergies: text('allergies'),
+  totalPrice: decimal('totalPrice', { precision: 10, scale: 2 }).notNull(),
+  paymentMethod: text('paymentMethod').notNull(), // gift_card, stripe, gift_card_partial
+  paymentStatus: text('paymentStatus').default('pending').notNull(), // pending, paid, failed
+  giftCardId: text('giftCardId'),
+  giftCardValue: decimal('giftCardValue', { precision: 10, scale: 2 }),
+  remainingAmount: decimal('remainingAmount', { precision: 10, scale: 2 }),
+  stripeSessionId: text('stripeSessionId'),
+  createdAt: timestamp('createdAt').notNull().defaultNow(),
+  updatedAt: timestamp('updatedAt').notNull(),
+})
+
+export type BookingRecord = typeof booking.$inferSelect
+export type NewBooking = typeof booking.$inferInsert
+
 // Type exports for status history
 export type SessionChangeStatusHistory = typeof sessionChangeStatusHistory.$inferSelect
 export type NewSessionChangeStatusHistory = typeof sessionChangeStatusHistory.$inferInsert
