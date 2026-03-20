@@ -65,14 +65,25 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     authorized({ auth, request: { nextUrl } }) {
       const isLoggedIn = !!auth?.user
       const isOnDashboard = !nextUrl.pathname.startsWith('/login')
-      const isApiRoute = nextUrl.pathname.startsWith('/api')
 
-      // Protect all routes except login and API routes
-      if (isOnDashboard && !isLoggedIn && !isApiRoute) {
-        return false // Redirect to login
+      // Redirect unauthenticated users to login
+      if (isOnDashboard && !isLoggedIn) {
+        return false
       }
 
       return true
+    },
+    async jwt({ token, user }) {
+      if (user) {
+        token.role = user.role
+      }
+      return token
+    },
+    async session({ session, token }) {
+      if (session.user) {
+        session.user.role = token.role as string
+      }
+      return session
     },
   },
 })
